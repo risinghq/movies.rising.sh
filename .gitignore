@@ -15,6 +15,7 @@ node_modules
 server/middleware/__void-dev-trigger.ts
 .void
 .wrangler
+.cloudflare
 *.tsbuildinfo
 .DS_Store
 .vitest/
