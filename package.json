@@ -13,13 +13,12 @@
     "setup": "bun scripts/setup.ts",
     "preview": "vp preview",
     "db:migrate": "vp exec void db migrate",
-    "db:migrate:remote": "vp exec void db migrate --remote",
     "db:seed": "vp exec void db seed",
+    "db:seed:remote": "bun scripts/setup.ts --remote",
     "fixtures:fetch": "bun --env-file .env scripts/fetch-metadata.ts --all",
     "fixtures:trending": "bun --env-file .env scripts/fetch-metadata.ts --trending",
-    "deploy": "vp exec void deploy",
-    "release": "bun run check && bun run db:migrate:remote && bun run deploy",
-    "recover": "bun run db:migrate:remote && bun run db:seed && bun run deploy",
+    "deploy": "vp exec void deploy --platform cloudflare",
+    "release": "bun run check && bun run deploy",
     "audit": "vp dlx fallow audit --format pr-comment-github --quiet"
   },
   "dependencies": {

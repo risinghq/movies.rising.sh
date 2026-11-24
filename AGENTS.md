@@ -45,7 +45,9 @@ documentation owns the explanation of the system and its operational procedures:
 
 - This repository uses Vite+ (`vp`) and Void. The `package.json` scripts are the
   project commands and call `vp`. `mise.toml` only pins the tool versions.
-- The deploy target is Void Cloud. Use `bun run deploy` for deploys.
+- The deploy target is Cloudflare, the Worker `movies` at
+  https://movies.rising.sh. Use `bun run deploy` for deploys. See the deployment
+  section of `docs/development.md`.
 - Do not guess `void` CLI command names or flags.
 - Before running or suggesting a `void` command, read
   `node_modules/void/docs/reference/cli.md`.

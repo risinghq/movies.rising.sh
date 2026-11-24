@@ -63,12 +63,15 @@ Keep migration, seed, and deploy as separate operations.
 
 ```sh
 bun run db:migrate
-bun run db:migrate:remote
 bun run db:seed
+bun run db:seed:remote
 ```
 
-The scripts run `vp exec void db migrate`, its remote form with `--remote`, and
-`vp exec void db seed`. Void also provides these direct operations:
+The first two run `vp exec void db migrate` and `vp exec void db seed`.
+`db:seed:remote` loads `db/fixtures/media.json` into the deployed D1 database
+with `INSERT OR IGNORE`, so it never overwrites existing rows. Remote migrations
+need no script: `void deploy` applies them. Void also provides these direct
+operations:
 
 ```sh
 vp exec void db generate
@@ -98,28 +101,41 @@ are outside the fetched set. Both commands write `db/fixtures/media.json` and
 
 ## Deployment
 
-The target platform is Void Cloud. The normal release applies remote migrations
-and deploys:
+The app runs as the Cloudflare Worker `movies` on the rising account and serves
+https://movies.rising.sh. `void.config.ts` names the Worker and its custom
+domain. The deploy script runs `vp exec void deploy --platform cloudflare`. It
+builds the app, saves a D1 restore point, applies pending migrations, uploads
+the Worker, and attaches the domain. It records the D1 database and the queue it
+provisions in `void.lock.json`. Commit that file, so later deploys reuse the
+same resources.
 
 ```sh
 bun run release
 ```
 
-That script runs `check`, `db:migrate:remote`, and `deploy`. The `deploy` script
-runs `vp exec void deploy`.
+`release` runs `check`, then `deploy`. A deploy reads three environment
+variables:
 
-Recovery is for a remote project or database that has been manually reset or
-recreated:
+- `CLOUDFLARE_API_TOKEN`: a token with Workers Scripts, D1, Queues and Workers
+  Routes write access, and DNS write on the `rising.sh` zone.
+- `CLOUDFLARE_ACCOUNT_ID`: the rising account.
+- `CLOUDFLARE_WORKERS_SUBDOMAIN`: `empirical`, the account's workers.dev
+  subdomain.
 
-```sh
-bun run recover
-```
+The Worker reads `BETTER_AUTH_SECRET`, which is required, and
+`TMDB_READ_ACCESS_TOKEN` and `ADMIN_EMAIL`, which are optional. They are Worker
+secrets. Run `vp exec void connect --platform cloudflare` once to save the
+target, then set each secret with `vp exec void secret put <NAME>=<value>`.
 
-It runs `db:migrate:remote`, `db:seed`, and `deploy`. Use it only when a clean
-remote database is intentional.
+After the first deploy to an empty database, load the catalog with
+`bun run db:seed:remote`.
 
-The CI deployment workflow runs `bun install --frozen-lockfile`, `check`, and
-`deploy` with `VOID_TOKEN`. Do not put credentials in this repository.
+The CI deployment workflow runs on pushes to `master`. It runs
+`bun install --frozen-lockfile`, `check`, and `deploy`. The token and account ID
+come from the `risinghq` organization secrets `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID`. Do not add repository copies, because a repository
+secret overrides the organization secret. Do not put credentials in this
+repository.
 
 ## Local queues and crons
 
