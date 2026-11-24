@@ -20,5 +20,9 @@ export default defineConfig({
   cloudflare: {
     name: "movies",
     routes: [{ pattern: "movies.rising.sh", custom_domain: true }],
+    // The custom domain is the only public address. Void refuses to republish
+    // a Worker whose workers.dev and preview URL state the config leaves out.
+    workers_dev: false,
+    preview_urls: false,
   },
 });
