@@ -1,11 +1,11 @@
 # tracker
 
-[![CI](https://github.com/totallynotdavid/movies/actions/workflows/ci.yml/badge.svg)](https://github.com/totallynotdavid/movies/actions/workflows/ci.yml)
+[![CI](https://github.com/risinghq/movies.rising.sh/actions/workflows/ci.yml/badge.svg)](https://github.com/risinghq/movies.rising.sh/actions/workflows/ci.yml)
 
-tracker is a web app for people who want to record what they watch, what they
-plan to watch, and what they think of movies and shows. It stores a local
-catalog and personal watch data. It does not play or host media. TMDB supplies
-optional catalog metadata.
+tracker is a web app, live at https://movies.rising.sh. It is for people who
+want to record what they watch, what they plan to watch, and what they think of
+movies and shows. It stores a local catalog and personal watch data. It does not
+play or host media. TMDB supplies optional catalog metadata.
 
 It is built with Void (Cloudflare Workers + D1), Vite, Vue 3, Drizzle ORM, and
 UnoCSS.

@@ -1,38 +1,32 @@
 {
   "version": 1,
   "source": {
-    "name": "track",
-    "compatibility_date": "2026-02-24",
-    "d1_databases": [
+    "name": "movies",
+    "routes": [
       {
-        "binding": "DB",
-        "database_name": "default",
-        "database_id": "local"
-      }
-    ],
-    "kv_namespaces": [
-      {
-        "binding": "KV",
-        "id": "local"
+        "pattern": "movies.rising.sh",
+        "custom_domain": true
       }
     ]
   },
   "resolved": {
-    "name": "track",
-    "compatibility_date": "2026-02-24",
+    "name": "movies",
+    "routes": [
+      {
+        "pattern": "movies.rising.sh",
+        "custom_domain": true
+      }
+    ],
+    "account_id": "87dbfa4b79d775c28dda68b15f58a0cb",
     "d1_databases": [
       {
         "binding": "DB",
-        "database_name": "default",
-        "database_id": "local"
+        "database_name": "movies-db",
+        "database_id": "421ef1fd-2272-456e-af5f-3c22cdbecfeb",
+        "migrations_dir": "./db/migrations"
       }
     ],
-    "kv_namespaces": [
-      {
-        "binding": "KV",
-        "id": "local"
-      }
-    ]
+    "compatibility_date": "2026-02-24"
   },
-  "text": "{\n  \"name\": \"track\",\n  \"compatibility_date\": \"2026-02-24\",\n  \"d1_databases\": [\n    {\n      \"binding\": \"DB\",\n      \"database_name\": \"default\",\n      \"database_id\": \"local\",\n    },\n  ],\n  \"kv_namespaces\": [\n    {\n      \"binding\": \"KV\",\n      \"id\": \"local\",\n    },\n  ],\n}\n"
+  "text": "{\n  \"name\": \"movies\",\n  \"routes\": [\n    {\n      \"pattern\": \"movies.rising.sh\",\n      \"custom_domain\": true\n    }\n  ],\n  \"account_id\": \"87dbfa4b79d775c28dda68b15f58a0cb\",\n  \"d1_databases\": [\n    {\n      \"binding\": \"DB\",\n      \"database_name\": \"movies-db\",\n      \"database_id\": \"421ef1fd-2272-456e-af5f-3c22cdbecfeb\",\n      \"migrations_dir\": \"./db/migrations\"\n    }\n  ],\n  \"compatibility_date\": \"2026-02-24\"\n}\n"
 }
