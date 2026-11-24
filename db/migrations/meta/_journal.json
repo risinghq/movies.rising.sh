@@ -8,6 +8,13 @@
       "when": 1781454708735,
       "tag": "20260614163148_grey_pestilence",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1795557915822,
+      "tag": "20261124220515_bright_spot",
+      "breakpoints": true
     }
   ]
 }
