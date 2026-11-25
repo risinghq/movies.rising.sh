@@ -1,69 +1,83 @@
-import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import type { PersonRecord } from "@/domain/catalog/people";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { runBatch } from "@/db/kernel";
+import { resetDb } from "@/test/d1";
+import { findPersonBySlug, personStubsWrite, type PersonRecord } from "@/domain/catalog/people";
 import { ensurePersonDetails } from "./person-hydration";
 
-const mocks = vi.hoisted(() => ({
-  fetchPersonDetail: vi.fn<(tmdbId: number) => Promise<unknown>>(),
-  findPersonBySlug: vi.fn<(slug: string) => Promise<unknown>>(),
-  runBatch: vi.fn<(statements: unknown[]) => Promise<void>>(),
-}));
+vi.mock("void/env", () => ({ env: { TMDB_READ_ACCESS_TOKEN: "token" } }));
 
-vi.mock("void/log", () => ({ logger: { warn: vi.fn<() => void>() } }));
-vi.mock("@/integrations/tmdb", () => ({
-  fetchPersonDetail: mocks.fetchPersonDetail,
-  tmdbToken: () => "token",
-}));
-vi.mock("@/db/kernel", () => ({ runBatch: mocks.runBatch }));
-vi.mock("@/domain/catalog/people", () => ({
-  findPersonBySlug: mocks.findPersonBySlug,
-  personScalarsWrite: () => ["write"],
-  markPersonDetailsFailedWrite: () => ["mark"],
-}));
+const fetchMock = vi.fn<typeof fetch>();
 
-const detail = { scalars: { name: "New" }, acting: [{ creditId: "a" }], crew: [] };
+const tmdbPerson = {
+  name: "New Name",
+  biography: "A biography.",
+  combined_credits: {
+    cast: [{ credit_id: "c1", id: 10, media_type: "movie", title: "A Film", character: "Hero" }],
+    crew: [],
+  },
+};
 
-function person(detailsHydratedAt: number | null): PersonRecord {
-  return {
-    id: "tmdb:person:1",
-    slug: "someone-1",
-    name: "Old",
-    detailsHydratedAt,
-    detailsError: null,
-  } as PersonRecord;
+async function storedPerson(): Promise<PersonRecord> {
+  await runBatch(
+    personStubsWrite([
+      {
+        tmdbId: 1,
+        name: "Old Name",
+        gender: null,
+        knownForDepartment: null,
+        profilePath: null,
+        popularity: null,
+      },
+    ]),
+  );
+  const person = await findPersonBySlug("old-name-1");
+  if (!person) throw new Error("seed failed");
+  return person;
 }
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  mocks.fetchPersonDetail.mockResolvedValue(detail);
-  mocks.runBatch.mockResolvedValue();
+beforeEach(async () => {
+  await resetDb();
+  vi.stubGlobal("fetch", fetchMock);
+  fetchMock.mockReset();
+  fetchMock.mockImplementation(async () => Response.json(tmdbPerson));
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe("ensurePersonDetails", () => {
-  it("serves a fresh person without writing", async () => {
-    const fresh = person(Date.now());
-    const view = await ensurePersonDetails(fresh);
+  it("stores the scalars of a stub and returns the stored row", async () => {
+    const view = await ensurePersonDetails(await storedPerson());
 
-    expect(view).toEqual({ person: fresh, acting: detail.acting, crew: [] });
-    expect(mocks.runBatch).not.toHaveBeenCalled();
-    expect(mocks.findPersonBySlug).not.toHaveBeenCalled();
+    expect(view.person).toMatchObject({ name: "New Name", biography: "A biography." });
+    expect(view.person.detailsHydratedAt).not.toBeNull();
+    expect(view.acting.map((entry) => entry.title)).toEqual(["A Film"]);
   });
 
-  it("stores the scalars of a stub and returns the stored row", async () => {
-    const stored = { ...person(Date.now()), name: "New" };
-    mocks.findPersonBySlug.mockResolvedValue(stored);
+  it("serves a fresh person as stored and takes the filmography from TMDB", async () => {
+    const fresh = (await ensurePersonDetails(await storedPerson())).person;
+    fetchMock.mockImplementation(async () =>
+      Response.json({ ...tmdbPerson, name: "Renamed Since" }),
+    );
 
-    const view = await ensurePersonDetails(person(null));
+    const view = await ensurePersonDetails(fresh);
 
-    expect(mocks.runBatch).toHaveBeenCalledWith(["write"]);
-    expect(view.person).toBe(stored);
+    expect(view.person).toEqual(fresh);
+    expect(await findPersonBySlug(fresh.slug)).toMatchObject({ name: "New Name" });
+    expect(view.acting).toHaveLength(1);
   });
 
   it("records a failed fetch and returns no filmography", async () => {
-    mocks.fetchPersonDetail.mockRejectedValue(new Error("TMDB down"));
+    fetchMock.mockImplementation(async () => new Response("down", { status: 500 }));
+    const stub = await storedPerson();
 
-    const view = await ensurePersonDetails(person(null));
+    const view = await ensurePersonDetails(stub);
 
-    expect(mocks.runBatch).toHaveBeenCalledWith(["mark"]);
-    expect(view.acting).toEqual([]);
+    expect(view).toEqual({ person: stub, acting: [], crew: [] });
+    expect(await findPersonBySlug(stub.slug)).toMatchObject({
+      detailsHydratedAt: null,
+      detailsError: expect.stringContaining("500"),
+    });
   });
 });

@@ -38,6 +38,7 @@
     "@iconify-json/lucide": "^1.2.157",
     "@types/bun": "^1.4.5",
     "eslint-plugin-regexp": "3.3.3",
+    "miniflare": "5.20261118.0-beta",
     "typescript": "^7.0.2",
     "unocss": "^66.13.0",
     "vite-plus": "1.7.0",

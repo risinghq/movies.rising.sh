@@ -9,9 +9,13 @@ export default defineConfig({
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
       // Vitest 5 cannot attach a second server to Void's worker and page plugins.
-      // Unit tests do not load route modules, so they only need the schema alias.
+      // Unit tests do not load route modules, so they need the schema alias and a
+      // real D1 behind `void/db`.
       ...(process.env.VITEST
-        ? { "@schema": fileURLToPath(new URL("./db/schema.ts", import.meta.url)) }
+        ? {
+            "@schema": fileURLToPath(new URL("./db/schema.ts", import.meta.url)),
+            "void/db": fileURLToPath(new URL("./src/test/d1.ts", import.meta.url)),
+          }
         : {}),
     },
   },

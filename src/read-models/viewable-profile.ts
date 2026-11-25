@@ -12,10 +12,15 @@ export async function findViewableProfile(
   if (!username) return null;
 
   const profile = await findProfileByUsername(username);
-  if (!profile) return null;
+  return profile ? viewerRelation(profile, viewerId) : null;
+}
 
+// A private profile is visible to its owner only.
+export function viewerRelation(
+  profile: ProfileIdentity,
+  viewerId: string | null,
+): ViewerProfileRelation | null {
   const owner = viewerId === profile.id;
   if (!owner && profile.visibility !== "public") return null;
-
   return { profile, owner };
 }
