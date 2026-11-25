@@ -3,6 +3,7 @@ import { onMounted, ref } from "vue";
 import { auth } from "@/auth-client";
 import SettingsSection from "./SettingsSection.vue";
 import { useSaveAction } from "@/composables/useSaveAction";
+import { withPasskeyMessage } from "@/shared/passkey-errors";
 
 type Passkey = { id: string; name?: string | null; createdAt?: Date | string | null };
 
@@ -21,7 +22,8 @@ function added(passkey: Passkey) {
 }
 
 async function add() {
-  if (await change.run(() => auth.passkey.addPasskey())) await load();
+  if (await change.run(async () => withPasskeyMessage(await auth.passkey.addPasskey())))
+    await load();
 }
 
 async function remove(id: string) {
