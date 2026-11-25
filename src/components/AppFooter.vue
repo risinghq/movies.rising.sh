@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { Link } from "@void/vue";
 import Modal from "@/components/ui/Modal.vue";
 
 const modalRef = ref<InstanceType<typeof Modal> | null>(null);
@@ -21,15 +22,11 @@ const modalRef = ref<InstanceType<typeof Modal> | null>(null);
         <span aria-hidden="true">·</span>
         <span><kbd class="font-mono">⌘K</kbd> palette</span>
       </button>
-      <span class="font-mono">void + vite+</span>
+      <nav aria-label="site" class="flex items-center gap-3 font-mono">
+        <Link class="link-subtle rounded" href="/about">about</Link>
+        <a class="link-subtle rounded" href="https://rising.sh/privacy/#movies">privacy</a>
+      </nav>
     </div>
-    <p class="container pb-4 text-fg-subtle/60 text-xs">
-      This product uses the TMDB API but is not endorsed or certified by TMDB. movies.rising.sh uses
-      Trakt but is not endorsed or certified by Trakt.
-      <a class="link-subtle underline underline-offset-2" href="https://rising.sh/privacy/#movies"
-        >privacy</a
-      >
-    </p>
 
     <Modal ref="modalRef" title="keyboard shortcuts" class="w-auto max-w-lg">
       <p class="mb-2 font-mono text-fg-subtle">global</p>
