@@ -4,7 +4,7 @@ import { instantFor } from "@/domain/instant";
 import type { LibraryEntryRecord } from "@/domain/tracking/library-entries";
 import type { WatchEventInsert } from "@/domain/tracking/watch-events";
 import type { LibraryStatus } from "@/shared/library-status";
-import type { ImportItem, ImportMediaRef } from "./items";
+import type { ImportItem, ImportMediaRef, ImportPlay } from "./items";
 
 export type FavoriteMediaInsert = typeof favoriteMedia.$inferInsert;
 
@@ -165,33 +165,55 @@ function planPlays(
   const plays: WatchEventInsert[] = [];
   for (const item of items) {
     if (item.kind !== "play") continue;
-    const mediaId = toMediaId(item.media.mediaType, item.media.tmdbId);
-    const season = item.episode?.seasonNumber ?? null;
-    const episode = item.episode?.episodeNumber ?? null;
-    const key = playKey(mediaId, season, episode, item.watchedAt);
+    const play = toWatchEvent(item, context);
+    const key = playKey(play.mediaId, play.seasonNumber, play.episodeNumber, play.watchedAt);
     if (seen.has(key)) {
       counts.duplicatePlays += 1;
       continue;
     }
     seen.add(key);
-    const instant = item.watchedAt === null ? null : instantFor(item.watchedAt, context.timeZone);
-    plays.push({
-      id: crypto.randomUUID(),
-      userId: context.userId,
-      mediaId,
-      mediaType: item.media.mediaType,
-      seasonNumber: season,
-      episodeNumber: episode,
-      watchedAt: instant?.watchedAt ?? null,
-      watchedOn: instant?.watchedOn ?? null,
-      utcOffsetMinutes: instant?.utcOffsetMinutes ?? null,
-      importId: context.importId,
-      createdAt: context.now,
-    });
+    plays.push(play);
     counts.plays += 1;
-    if (!instant) counts.undatedPlays += 1;
+    if (play.watchedAt === null) counts.undatedPlays += 1;
   }
   return plays;
+}
+
+type PlannedPlay = WatchEventInsert & {
+  seasonNumber: number | null;
+  episodeNumber: number | null;
+  watchedAt: number | null;
+};
+
+function toWatchEvent(item: ImportPlay, context: PlanContext): PlannedPlay {
+  const watchedAt = playTime(item, context.timeZone);
+  const instant = watchedAt === null ? null : instantFor(watchedAt, context.timeZone);
+  return {
+    id: crypto.randomUUID(),
+    userId: context.userId,
+    mediaId: toMediaId(item.media.mediaType, item.media.tmdbId),
+    mediaType: item.media.mediaType,
+    seasonNumber: item.episode?.seasonNumber ?? null,
+    episodeNumber: item.episode?.episodeNumber ?? null,
+    watchedAt: instant?.watchedAt ?? null,
+    watchedOn: instant?.watchedOn ?? null,
+    utcOffsetMinutes: instant?.utcOffsetMinutes ?? null,
+    importId: context.importId,
+    createdAt: context.now,
+  };
+}
+
+function playTime(item: ImportPlay, timeZone: string | null): number | null {
+  if (item.watchedAt !== null) return item.watchedAt;
+  return item.watchedOn ? localNoon(item.watchedOn, timeZone) : null;
+}
+
+// A day-only play is placed at noon in the user's zone: the day stays the
+// same in every zone, and a second import of the file yields the same instant,
+// so its plays read as duplicates.
+export function localNoon(day: string, timeZone: string | null): number {
+  const noonUtc = Date.parse(`${day}T12:00:00Z`);
+  return noonUtc - instantFor(noonUtc, timeZone).utcOffsetMinutes * 60_000;
 }
 
 // Returns the entry to upsert, or null when the import changes nothing.

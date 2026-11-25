@@ -1,5 +1,8 @@
-export const IMPORT_SOURCES = ["trakt", "tmdb"] as const;
+export const IMPORT_SOURCES = ["trakt", "tmdb", "letterboxd", "imdb"] as const;
 export type ImportSource = (typeof IMPORT_SOURCES)[number];
+// Sources the user approves on their own site; the rest arrive as files.
+export type ConnectedSource = "trakt" | "tmdb";
+export type FileSource = "letterboxd" | "imdb";
 
 // scanned: items staged, waiting for the user's review.
 // importing: the queue consumer is writing. done, failed and undone are final.

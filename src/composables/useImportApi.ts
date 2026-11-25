@@ -1,4 +1,7 @@
-import type { ImportSource } from "@/shared/import";
+import type { ExportFile } from "@/domain/import/letterboxd";
+import { readImdb } from "@/domain/import/imdb";
+import { readLetterboxd } from "@/domain/import/letterboxd";
+import type { ConnectedSource, FileSource } from "@/shared/import";
 
 export type ApiResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -28,7 +31,7 @@ type Pending =
   | { source: "trakt"; state: string; verifier: string }
   | { source: "tmdb"; requestToken: string };
 
-export function takePending<S extends ImportSource>(
+export function takePending<S extends ConnectedSource>(
   source: S,
 ): Extract<Pending, { source: S }> | null {
   const raw = sessionStorage.getItem(PENDING_KEY);
@@ -38,7 +41,7 @@ export function takePending<S extends ImportSource>(
   return pending.source === source ? (pending as Extract<Pending, { source: S }>) : null;
 }
 
-export async function connectSource(source: ImportSource): Promise<ApiResult<string>> {
+export async function connectSource(source: ConnectedSource): Promise<ApiResult<string>> {
   if (source === "trakt") {
     const res = await post<{ authorizeUrl: string; state: string; verifier: string }>(
       "/api/imports/trakt/connect",
@@ -65,6 +68,32 @@ export function scanTmdb(requestToken: string): Promise<ApiResult<Staged>> {
   return post("/api/imports/tmdb/scan", { requestToken });
 }
 
+// Reads the export in the browser and sends only the titles and entries, so
+// the rest of the export (a Letterboxd profile's email, reviews) stays here.
+export async function scanExport(source: FileSource, files: File[]): Promise<ApiResult<Staged>> {
+  const read = await readExportFiles(files).catch(() => null);
+  if (!read) return { ok: false, error: "unreadable_file" };
+  const scan = source === "letterboxd" ? readLetterboxd(read) : readImdb(read);
+  if (scan.titles.length === 0) return { ok: false, error: `no_${source}_rows` };
+  return post("/api/imports/file", { source, scan });
+}
+
+async function readExportFiles(files: File[]): Promise<ExportFile[]> {
+  const read: ExportFile[] = [];
+  for (const file of files) {
+    if (!file.name.toLowerCase().endsWith(".zip")) {
+      read.push({ name: file.name, text: await file.text() });
+      continue;
+    }
+    const { unzipSync, strFromU8 } = await import("fflate");
+    const entries = unzipSync(new Uint8Array(await file.arrayBuffer()), {
+      filter: (entry) => entry.name.toLowerCase().endsWith(".csv"),
+    });
+    for (const [name, data] of Object.entries(entries)) read.push({ name, text: strFromU8(data) });
+  }
+  return read;
+}
+
 export function startImport(id: string, undatedDays: string[]): Promise<ApiResult<unknown>> {
   return post(`/api/imports/${id}/start`, { undatedDays });
 }
@@ -89,6 +118,11 @@ const MESSAGES: Record<string, string> = {
   not_found: "this import no longer exists.",
   network: "the request did not reach the server. check your connection.",
   state_mismatch: "this sign-in did not start here. connect again from the import page.",
+  unreadable_file: "that file could not be read. choose the ZIP or CSV the site gave you.",
+  no_letterboxd_rows: "no films found. choose the ZIP from letterboxd.com/settings/data.",
+  no_imdb_rows: "no titles found. choose the ratings or watchlist CSV from IMDb.",
+  too_many_titles: "this export has more than 3,000 titles, more than one import matches.",
+  invalid_payload: "that file did not read as an export. choose the file the site gave you.",
 };
 
 export function importMessage(kind: string): string {
