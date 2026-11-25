@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { slugify } from "@/shared/slug";
 import { tmdbFetch } from "./client";
-import { Id, NullNum, NullStr, looseArray, parse } from "./parse";
+import { Id, NonEmptyStr, NullNum, NullStr, looseArray, parse } from "./parse";
 import type { MediaType } from "@/domain/catalog/media";
 
 export type TmdbMediaResult = {
@@ -41,9 +41,42 @@ const titleFields = {
 export const TitleItem = v.object(titleFields);
 type TitleItemPayload = v.InferOutput<typeof TitleItem>;
 
-// Only movie/tv hits are kept; person results drop at parse.
-const MultiItem = v.object({ ...titleFields, media_type: v.picklist(["movie", "tv"]) });
-const MultiSearch = v.object({ results: looseArray(MultiItem) });
+export type TmdbPersonResult = {
+  tmdbId: number;
+  name: string;
+  profilePath: string | null;
+  knownForDepartment: string | null;
+  /** Up to two of the titles TMDB lists the person as known for. */
+  knownFor: string[];
+  slug: string;
+};
+
+// /search/multi mixes titles and people in one ranked list. Each schema keeps
+// its own kind; the other kind's rows drop at parse.
+const TitleHit = v.object({ ...titleFields, media_type: v.picklist(["movie", "tv"]) });
+const PersonHit = v.object({
+  id: Id,
+  media_type: v.literal("person"),
+  name: NonEmptyStr,
+  profile_path: NullStr,
+  known_for_department: NullStr,
+  known_for: looseArray(v.object({ title: NullStr, name: NullStr })),
+});
+const MultiSearch = v.object({ results: looseArray(v.union([TitleHit, PersonHit])) });
+
+function mapPerson(item: v.InferOutput<typeof PersonHit>): TmdbPersonResult {
+  return {
+    tmdbId: item.id,
+    name: item.name,
+    profilePath: item.profile_path,
+    knownForDepartment: item.known_for_department,
+    knownFor: item.known_for
+      .map((t) => t.title ?? t.name)
+      .filter((t): t is string => t !== null)
+      .slice(0, 2),
+    slug: slugify(item.name, item.id),
+  };
+}
 
 export function mapTitle(item: TitleItemPayload, mediaType: MediaType): TmdbMediaResult | null {
   const title = item.title ?? item.name;
@@ -75,9 +108,12 @@ export function tmdbPath(mediaType: MediaType): "movie" | "tv" {
   return mediaType === "show" ? "tv" : "movie";
 }
 
-export async function searchTmdbMedia(input: { query: string; limit?: number }) {
+export type TmdbSearch = { titles: TmdbMediaResult[]; people: TmdbPersonResult[] };
+
+/** One /search/multi page, split into titles and people in TMDB's rank order. */
+export async function searchTmdb(input: { query: string; limit?: number }): Promise<TmdbSearch> {
   const query = input.query.trim();
-  if (!query) return [];
+  if (!query) return { titles: [], people: [] };
 
   const pageSize = Math.min(Math.max(input.limit ?? 20, 1), 20);
   const raw = await tmdbFetch<unknown>("/search/multi", {
@@ -86,10 +122,16 @@ export async function searchTmdbMedia(input: { query: string; limit?: number }) 
     page: "1",
   });
 
-  return parse(MultiSearch, raw)
-    .results.map((item) => mapTitle(item, item.media_type === "tv" ? "show" : "movie"))
-    .filter(isTitle)
-    .slice(0, pageSize);
+  const titles: TmdbMediaResult[] = [];
+  const people: TmdbPersonResult[] = [];
+  for (const item of parse(MultiSearch, raw).results) {
+    if (item.media_type === "person") people.push(mapPerson(item));
+    else {
+      const title = mapTitle(item, item.media_type === "tv" ? "show" : "movie");
+      if (title) titles.push(title);
+    }
+  }
+  return { titles: titles.slice(0, pageSize), people: people.slice(0, pageSize) };
 }
 
 const ShowTotals = v.object({ number_of_seasons: NullNum, number_of_episodes: NullNum });

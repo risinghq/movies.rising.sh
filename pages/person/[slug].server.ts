@@ -4,11 +4,10 @@ import { pageHead } from "@/shared/head";
 import { slugify } from "@/shared/slug";
 import { tmdbImage } from "@/shared/tmdb-image";
 import { getUser } from "void/auth";
-import { findPersonBySlug } from "@/domain/catalog/people";
 import { findMediaByTmdbIds } from "@/domain/catalog/media";
 import { groupByDepartment } from "@/domain/catalog/credits";
 import { isPersonFavorited } from "@/domain/tracking/favorites";
-import { ensurePersonDetails } from "@/services/person-hydration";
+import { ensurePersonDetails, loadPerson } from "@/services/person-hydration";
 import type { FilmographyEntry } from "@/shared/types/metadata";
 
 export type Props = InferProps<typeof loader>;
@@ -41,7 +40,7 @@ export const loader = defineHandler(async (c) => {
   const slug = c.req.param("slug") as string;
   const user = getUser();
 
-  const existing = await findPersonBySlug(slug);
+  const existing = await loadPerson(slug);
   if (!existing) return c.notFound();
 
   const [{ person, acting, crew }, isFavorited] = await Promise.all([

@@ -1,9 +1,10 @@
 export { tmdbToken } from "./client";
 export {
-  searchTmdbMedia,
+  searchTmdb,
   fetchTmdbShowTotals,
   fetchTmdbTitle,
   type TmdbMediaResult,
+  type TmdbPersonResult,
 } from "./search";
 export { discoverCompanyTitles } from "./discover";
 export { fetchMovieDetail, fetchShowDetail } from "./media-detail";

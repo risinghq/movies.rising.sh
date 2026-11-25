@@ -14,11 +14,21 @@ export type LocalResult = {
 
 export type RemoteResult = MediaSearchCandidate & { inLibrary: boolean };
 
+export type PersonResult = {
+  tmdbId: number;
+  name: string;
+  profilePath: string | null;
+  knownForDepartment: string | null;
+  knownFor: string[];
+  slug: string;
+};
+
 type SearchResponse = {
   error?: string;
   remoteEnabled?: boolean;
   local?: LocalResult[];
   remote?: RemoteResult[];
+  people?: PersonResult[];
 };
 
 export function useMediaSearch(options?: { limit?: number }) {
@@ -28,8 +38,15 @@ export function useMediaSearch(options?: { limit?: number }) {
   const error = ref("");
   const local = ref<LocalResult[]>([]);
   const remote = ref<RemoteResult[]>([]);
+  const people = ref<PersonResult[]>([]);
   const remoteEnabled = ref(false);
   const hasSearched = ref(false);
+
+  function reset() {
+    local.value = [];
+    remote.value = [];
+    people.value = [];
+  }
 
   async function run() {
     const q = query.value.trim();
@@ -38,8 +55,7 @@ export function useMediaSearch(options?: { limit?: number }) {
     error.value = "";
     hasSearched.value = true;
     loading.value = true;
-    local.value = [];
-    remote.value = [];
+    reset();
 
     try {
       const res = await fetch(`/api/media/search?q=${encodeURIComponent(q)}&limit=${limit}`);
@@ -49,6 +65,7 @@ export function useMediaSearch(options?: { limit?: number }) {
       remoteEnabled.value = Boolean(payload.remoteEnabled);
       local.value = payload.local ?? [];
       remote.value = payload.remote ?? [];
+      people.value = payload.people ?? [];
     } catch (caught) {
       error.value = caught instanceof Error ? caught.message : "search failed";
     } finally {
@@ -58,11 +75,10 @@ export function useMediaSearch(options?: { limit?: number }) {
 
   function clear() {
     query.value = "";
-    local.value = [];
-    remote.value = [];
+    reset();
     hasSearched.value = false;
     error.value = "";
   }
 
-  return { query, loading, error, local, remote, remoteEnabled, hasSearched, run, clear };
+  return { query, loading, error, local, remote, people, remoteEnabled, hasSearched, run, clear };
 }

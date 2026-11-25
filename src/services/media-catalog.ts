@@ -9,9 +9,10 @@ import { libraryMediaIds } from "@/domain/tracking/library-entries";
 import {
   fetchTmdbShowTotals,
   fetchTmdbTitle,
-  searchTmdbMedia,
+  searchTmdb,
   tmdbToken,
   type TmdbMediaResult,
+  type TmdbPersonResult,
 } from "@/integrations/tmdb";
 import { err, ok, type Result } from "@/result";
 import type { TrackingError } from "@/domain/errors";
@@ -25,6 +26,8 @@ export type CatalogSearch = {
   remoteEnabled: boolean;
   local: Array<MediaRecord & { inLibrary: boolean }>;
   remote: Array<MediaSearchResult & { inLibrary: boolean }>;
+  /** TMDB people matching the query; each slug opens /person/{slug}. */
+  people: TmdbPersonResult[];
 };
 
 export async function searchCatalog(input: {
@@ -36,13 +39,13 @@ export async function searchCatalog(input: {
   // search page can tailor its empty state without importing the token check.
   const remoteEnabled = Boolean(tmdbToken());
   if (!input.query.trim()) {
-    return { remoteEnabled, local: [], remote: [] };
+    return { remoteEnabled, local: [], remote: [], people: [] };
   }
 
   const limit = input.limit ?? 20;
-  const [local, remote] = await Promise.all([
+  const [local, { titles: remote, people }] = await Promise.all([
     searchLocalMedia(input.query, limit),
-    remoteEnabled ? searchTmdbMedia({ query: input.query, limit }) : [],
+    remoteEnabled ? searchTmdb({ query: input.query, limit }) : { titles: [], people: [] },
   ]);
   const cachedRows = await findMediaByTmdbIds(
     remote.map((item) => ({ mediaType: item.mediaType, tmdbId: item.tmdbId })),
@@ -66,6 +69,7 @@ export async function searchCatalog(input: {
         inLibrary: cachedMediaId !== null && inLibrary.has(cachedMediaId),
       };
     }),
+    people,
   };
 }
 
