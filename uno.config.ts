@@ -115,6 +115,11 @@ export default defineConfig({
       "box-action",
       "flex h-11 items-center rounded-md border border-border bg-bg-subtle px-4 font-mono text-[0.8125rem] text-fg no-underline transition-colors hover:border-border-hover focus-ring sm:h-9",
     ],
+    [
+      "favorite-caption",
+      "text-[0.6875rem] leading-[0.9375rem] font-mono text-fg line-clamp-2 break-words group-hover:text-accent transition-colors",
+    ],
+    ["favorite-hint", "text-[0.6875rem] leading-relaxed font-mono text-fg-muted"],
     ["badge-orange", "bg-badge-orange/10 text-badge-orange"],
     ["badge-yellow", "bg-badge-yellow/10 text-badge-yellow"],
     ["badge-green", "bg-badge-green/10 text-badge-green"],
