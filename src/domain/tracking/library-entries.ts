@@ -10,8 +10,23 @@ import { resolveStatus, type LibraryStatus } from "@/shared/library-status";
 
 export type LibraryEntryRecord = typeof libraryEntries.$inferSelect;
 
+// The library lists hundreds of entries, so each carries only the media fields
+// a card shows, not the full catalog row.
+const libraryMediaColumns = {
+  id: media.id,
+  title: media.title,
+  slug: media.slug,
+  mediaType: media.mediaType,
+  posterPath: media.posterPath,
+  releaseDate: media.releaseDate,
+  voteAverage: media.voteAverage,
+  episodeCount: media.episodeCount,
+};
+
+export type LibraryMedia = Pick<MediaRecord, keyof typeof libraryMediaColumns>;
+
 export type LibraryEntryWithProgress = LibraryEntryRecord & {
-  media: MediaRecord;
+  media: LibraryMedia;
   status: LibraryStatus;
   watchedEpisodeCount: number;
   airedEpisodeCount: number | null;
@@ -132,7 +147,7 @@ export async function libraryMediaIds(
 
 export async function entriesWithProgress(userId: string): Promise<LibraryEntryWithProgress[]> {
   const rows = await db
-    .select({ entry: libraryEntries, media })
+    .select({ entry: libraryEntries, media: libraryMediaColumns })
     .from(libraryEntries)
     .innerJoin(media, eq(libraryEntries.mediaId, media.id))
     .where(eq(libraryEntries.userId, userId))
