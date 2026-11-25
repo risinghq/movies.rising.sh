@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Props } from "./settings.server";
 import AccountSection from "@/components/settings/AccountSection.vue";
+import PasskeysSection from "@/components/settings/PasskeysSection.vue";
 import ProfileSection from "@/components/settings/ProfileSection.vue";
 import PreferencesSection from "@/components/settings/PreferencesSection.vue";
 import SettingsSection from "@/components/settings/SettingsSection.vue";
@@ -23,6 +24,8 @@ const { theme, toggle } = useColorTheme();
       :display-name="props.profile.displayName"
       :email="props.profile.email"
     />
+
+    <PasskeysSection />
 
     <ProfileSection
       :username="props.profile.username"

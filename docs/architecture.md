@@ -83,6 +83,15 @@ Emailing the link needs Cloudflare Email Sending onboarding for a sender domain
 and a deploy token with Email Sending Edit. Once that exists,
 `sendResetPassword` can call `sendEmail` and nothing else changes.
 
+A signed-in user can add passkeys in settings and then sign in without a
+password. The Better Auth passkey plugin stores them in the `passkey` table. Its
+relying-party ID and origin come from the request origin, because Void sets
+Better Auth's `baseURL` per request, so the same config serves localhost and
+movies.rising.sh. A passkey is bound to the host that registered it. The `auth`
+export of `void/client` carries no plugins, so passkey actions import the client
+in `src/auth-client.ts`, which adds `passkeyClient()`. Other auth calls keep
+`void/client`.
+
 The database has catalog tables for media, people, credits, genres, companies,
 localized titles, and episodes. User data is in `library_entries`,
 `watch_events`, `favorite_media`, and `favorite_people` in `db/schema.ts`. Watch
