@@ -11,14 +11,8 @@ export const GET = defineHandler(async (c) => {
     return c.json({ error: "q is required" }, 400);
   }
 
-  const userId = getUser()?.id ?? null;
   try {
-    // A signed-in result marks the viewer's library, so only anonymous results are shared.
-    c.header(
-      "Cache-Control",
-      userId ? "private, no-store" : "public, s-maxage=60, stale-while-revalidate=120",
-    );
-    return await searchCatalog({ query: q, limit, userId });
+    return await searchCatalog({ query: q, limit, userId: getUser()?.id ?? null });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Search failed";
     return c.json({ error: message }, 502);
