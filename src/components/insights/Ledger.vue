@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { Link } from "@void/vue";
 import type { Ledger } from "@/domain/insights/mirror";
 import ProfileSection from "@/components/identity/ProfileSection.vue";
 
@@ -48,23 +49,23 @@ const droppedText = computed(() => {
           class="flex items-center justify-between gap-3 px-4 py-3"
         >
           <div class="flex min-w-0 flex-col gap-0.5">
-            <a
+            <Link
               :href="`/media/${show.slug}`"
               class="truncate text-sm font-mono text-fg transition-colors hover:text-accent"
             >
               {{ show.title }}
-            </a>
+            </Link>
             <span class="text-[0.7rem] font-mono text-fg-subtle">
               {{ show.watchedEpisodeCount }} / {{ show.airedEpisodeCount }} episodes · since
               {{ since(show.lastWatchedAt) }}
             </span>
           </div>
-          <a
+          <Link
             :href="`/media/${show.slug}`"
             class="shrink-0 rounded-md border border-border px-2 py-1 text-[0.7rem] font-mono text-fg-muted transition-colors hover:border-accent/40 hover:text-fg"
           >
             pick back up
-          </a>
+          </Link>
         </li>
       </ul>
     </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { useRouter } from "@void/vue";
+import { Link, useRouter } from "@void/vue";
 import { importMessage, type ApiResult } from "@/composables/useImportApi";
 
 const props = defineProps<{ sourceName: string; scan: () => Promise<ApiResult<{ id: string }>> }>();
@@ -32,7 +32,9 @@ onMounted(async () => {
     <template v-else>
       <span class="i-lucide:circle-alert w-8 h-8 text-fg-subtle" aria-hidden="true" />
       <p class="font-mono text-fg-muted" role="alert">{{ error }}</p>
-      <a href="/import" class="text-sm font-mono text-accent hover:underline">back to import</a>
+      <Link href="/import" class="text-sm font-mono text-accent hover:underline"
+        >back to import</Link
+      >
     </template>
   </main>
 </template>

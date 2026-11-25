@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import BaseCard from "@/components/ui/BaseCard.vue";
+import MediaLink from "./MediaLink.vue";
 import type { MediaType } from "@/domain/catalog/media";
 import { tmdbImage } from "@/components/tmdb-image";
 
@@ -15,13 +16,12 @@ const props = defineProps<{
 }>();
 
 const year = computed(() => (props.releaseDate ? new Date(props.releaseDate).getFullYear() : null));
-const href = computed(() => (props.slug ? `/media/${props.slug}` : undefined));
 </script>
 
 <template>
   <BaseCard class="p-0! overflow-hidden">
     <div class="poster-wrap rounded-b-none relative overflow-hidden rounded-t-lg">
-      <a :href="href" class="block h-full w-full">
+      <MediaLink :slug="slug" class="block h-full w-full">
         <img
           v-if="posterPath"
           :src="tmdbImage(posterPath, 'w342')"
@@ -36,7 +36,7 @@ const href = computed(() => (props.slug ? `/media/${props.slug}` : undefined));
         >
           no poster
         </div>
-      </a>
+      </MediaLink>
 
       <div class="absolute top-1.5 left-1.5 z-10">
         <slot name="overlay">
@@ -54,12 +54,12 @@ const href = computed(() => (props.slug ? `/media/${props.slug}` : undefined));
     </div>
 
     <div class="flex flex-col gap-1.5 p-3">
-      <a
-        :href="href"
+      <MediaLink
+        :slug="slug"
         class="font-mono text-sm text-fg leading-snug line-clamp-2 min-h-[2.5em] hover:text-accent transition-colors"
       >
         {{ title }}
-      </a>
+      </MediaLink>
 
       <slot name="meta">
         <div class="flex items-center gap-2 text-xs text-fg-subtle font-mono">

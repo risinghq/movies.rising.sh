@@ -28,7 +28,11 @@ export default defineConfig({
       },
     ],
   },
-  plugins: lazyPlugins(() => (process.env.VITEST ? [] : [voidPlugin(), UnoCSS(), ...voidVue()])),
+  plugins: lazyPlugins(() =>
+    process.env.VITEST
+      ? []
+      : [voidPlugin(), UnoCSS(), ...voidVue({ prefetch: { defaultStrategy: "hover" } })],
+  ),
   staged: {
     "*": "vp check --fix",
   },

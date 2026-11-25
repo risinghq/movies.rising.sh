@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { Link } from "@void/vue";
 import type { Props } from "./index.server";
 import { useTracking } from "@/composables/useTracking";
 import { useToast } from "@/composables/useToast";
@@ -219,10 +220,10 @@ onMounted(() => {
           <span class="i-lucide:library size-[1.1em]" aria-hidden="true" />
           <span class="max-sm:sr-only">library</span>
         </span>
-        <a v-else-if="!user" href="/login" class="title-action" aria-label="sign in to track">
+        <Link v-else-if="!user" href="/login" class="title-action" aria-label="sign in to track">
           <span class="i-lucide:plus size-[1.1em]" aria-hidden="true" />
           <span class="max-sm:sr-only">track</span>
-        </a>
+        </Link>
       </template>
     </MediaHeader>
 

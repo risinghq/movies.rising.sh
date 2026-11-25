@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { useRouter } from "@void/vue";
 import type { Props } from "./[slug].server";
 import { genderLabel } from "@/domain/catalog/people";
 import FilmographyCard from "@/components/media/FilmographyCard.vue";
@@ -8,6 +9,7 @@ import { tmdbImage } from "@/components/tmdb-image";
 const BIO_PREVIEW = 500;
 
 const props = defineProps<Props>();
+const router = useRouter();
 
 const favorited = ref(props.isFavorited);
 const favBusy = ref(false);
@@ -46,7 +48,7 @@ const bioText = computed(() =>
 
 async function toggleFavorite() {
   if (!props.user) {
-    window.location.href = "/login";
+    void router.visit("/login");
     return;
   }
   favBusy.value = true;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { useRouter } from "@void/vue";
+import { Link, useRouter } from "@void/vue";
 import Btn from "@/components/ui/Btn.vue";
 import SettingsSection from "@/components/settings/SettingsSection.vue";
 import { importMessage, startImport } from "@/composables/useImportApi";
@@ -119,7 +119,7 @@ async function start() {
       <Btn variant="primary" classicon="i-lucide:download" :disabled="starting" @click="start">
         {{ starting ? "starting..." : "import" }}
       </Btn>
-      <a href="/import" class="text-sm font-mono text-fg-muted hover:text-fg">not now</a>
+      <Link href="/import" class="text-sm font-mono text-fg-muted hover:text-fg">not now</Link>
       <span v-if="undatedPlays" class="text-xs text-fg-subtle">
         {{ formatCount(undatedPlays, "play", "plays") }} without a date
       </span>

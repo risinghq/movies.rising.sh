@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Link } from "@void/vue";
 import type { ProfileActivityItem } from "@/domain/insights/profile";
 
 defineProps<{
@@ -49,22 +50,22 @@ function formatDay(watchedOn: string) {
         <p class="text-sm font-mono text-fg leading-snug">
           <template v-if="item.seasonNumber === null">
             Watched
-            <a
+            <Link
               :href="`/media/${item.slug}`"
               class="text-accent hover:text-accent/80 transition-colors"
             >
               {{ item.title }}
-            </a>
+            </Link>
           </template>
 
           <template v-else>
             Watched {{ episodeLabel(item) }} of
-            <a
+            <Link
               :href="`/media/${item.slug}`"
               class="text-accent hover:text-accent/80 transition-colors"
             >
               {{ item.title }}
-            </a>
+            </Link>
           </template>
         </p>
 

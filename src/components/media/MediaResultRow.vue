@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useResultAction } from "@/composables/useResultAction";
+import MediaLink from "./MediaLink.vue";
 import type { MediaRef } from "@/shared/tracking";
 import { tmdbImage } from "@/components/tmdb-image";
 
@@ -16,7 +17,6 @@ const props = defineProps<{
 }>();
 
 const year = computed(() => (props.releaseDate ? new Date(props.releaseDate).getFullYear() : null));
-const href = computed(() => (props.slug ? `/media/${props.slug}` : undefined));
 
 const { state, doneLabel, action, act } = useResultAction({
   media: props.media,
@@ -31,7 +31,7 @@ const { state, doneLabel, action, act } = useResultAction({
     :class="active ? 'bg-bg-elevated' : 'hover:bg-bg-elevated'"
     :data-active="active ? 'true' : undefined"
   >
-    <a :href="href" class="flex min-w-0 flex-1 items-center gap-3 px-2 py-1.5 no-underline">
+    <MediaLink :slug="slug" class="flex min-w-0 flex-1 items-center gap-3 px-2 py-1.5 no-underline">
       <div class="w-8 h-12 shrink-0 overflow-hidden rounded bg-bg-elevated">
         <img
           v-if="posterPath"
@@ -48,7 +48,7 @@ const { state, doneLabel, action, act } = useResultAction({
           {{ mediaType }}<span v-if="year"> · {{ year }}</span>
         </span>
       </div>
-    </a>
+    </MediaLink>
 
     <span
       v-if="state === 'done'"

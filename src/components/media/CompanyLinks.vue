@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { Link } from "@void/vue";
 
 const props = defineProps<{ companies: { name: string; href: string }[] }>();
 
@@ -13,7 +14,7 @@ const hidden = computed(() => props.companies.length - LIMIT);
   <span>
     <template v-for="(company, index) in shown" :key="company.href">
       <span v-if="index > 0" class="text-fg-subtle" aria-hidden="true"> · </span>
-      <a :href="company.href" class="company-link">{{ company.name }}</a>
+      <Link :href="company.href" class="company-link">{{ company.name }}</Link>
     </template>
     <template v-if="hidden > 0 && !open">
       <span class="text-fg-subtle" aria-hidden="true"> · </span>

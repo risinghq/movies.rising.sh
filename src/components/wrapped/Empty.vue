@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Link } from "@void/vue";
+
 defineProps<{ year: number }>();
 </script>
 
@@ -20,13 +22,13 @@ defineProps<{ year: number }>();
     </div>
 
     <div class="flex flex-wrap gap-3">
-      <a
+      <Link
         href="/"
         class="inline-flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-mono text-fg transition-colors hover:bg-accent/15"
       >
         <span class="i-lucide:library w-4 h-4" aria-hidden="true" />
         go to your library
-      </a>
+      </Link>
     </div>
   </section>
 </template>

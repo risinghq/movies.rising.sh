@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { Link } from "@void/vue";
 import type { Props } from "./[slug].server";
 import CompanyFilterNav from "@/components/company/CompanyFilterNav.vue";
 import CompanyHeader from "@/components/company/CompanyHeader.vue";
@@ -44,7 +45,7 @@ function filterHref(filter: CompanyFilter) {
         <p class="max-w-[26ch] text-xs leading-normal text-fg-subtle">
           TMDB has no {{ emptyNoun }} for this {{ companyLabel(company.kind) }}.
         </p>
-        <a v-if="filter !== 'all'" :href="filterHref('all')" class="box-action">show all</a>
+        <Link v-if="filter !== 'all'" :href="filterHref('all')" class="box-action">show all</Link>
       </div>
 
       <CompanyTitles
