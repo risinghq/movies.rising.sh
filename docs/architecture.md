@@ -71,17 +71,18 @@ other users receive `member`. The auth client cannot set the role. Anonymous,
 member, and admin are the application roles exposed by `src/domain/user.ts` and
 `middleware/01.auth-role.ts`.
 
-The app sends no email, so a forgotten password goes through the site owner. The
-sign-in page's "forgot password?" form calls Better Auth's
-`requestPasswordReset`. Its `sendResetPassword` hook in `auth.ts` stores the
-reset URL and token in `password_reset_links`, one row per user. The owner reads
-the link (see [Development](development.md#password-reset-links)) and sends it
-to the user. The link lands on `/reset-password`, which calls `resetPassword`
-and revokes the user's sessions. Better Auth owns the token: it lasts 24 hours
-and is single-use, and a link is live only while its `verification` row exists.
-Emailing the link needs Cloudflare Email Sending onboarding for a sender domain
-and a deploy token with Email Sending Edit. Once that exists,
-`sendResetPassword` can call `sendEmail` and nothing else changes.
+The sign-in page's "forgot password?" form calls Better Auth's
+`requestPasswordReset`. Its `sendResetPassword` hook in `auth.ts` calls
+`deliverResetLink` in `src/domain/password-reset.ts`, which emails the link with
+`sendEmail` from `void/email`. The Worker's `SEND_EMAIL` binding is authored in
+`void.config.ts`; `email.from` stays unset so the deploy skips Void's email
+setup, whose API checks need a token scope the CI token lacks. When the send
+fails, the link is stored in `password_reset_links`, one row per user, and the
+site owner passes it on (see
+[Development](development.md#password-reset-links)). The link lands on
+`/reset-password`, which calls `resetPassword` and revokes the user's sessions.
+Better Auth owns the token: it lasts 1 hour and is single-use, and a link is
+live only while its `verification` row exists.
 
 A signed-in user can add passkeys in settings and then sign in without a
 password. The Better Auth passkey plugin stores them in the `passkey` table. Its

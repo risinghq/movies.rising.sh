@@ -19,13 +19,11 @@ function submit() {
   <div class="flex flex-col gap-6">
     <div class="flex flex-col gap-1">
       <h1 class="text-base font-mono text-fg">reset your password</h1>
-      <p class="text-sm text-fg-muted">
-        The site sends no email. Ask the site owner for your reset link after you submit.
-      </p>
+      <p class="text-sm text-fg-muted">We email you a link to choose a new password.</p>
     </div>
 
     <p v-if="request.saved.value" class="text-sm text-fg font-mono" role="status">
-      Request saved. Ask the site owner for your reset link. It works for 24 hours.
+      If an account uses that email, a reset link is on its way. It works for 1 hour.
     </p>
 
     <form v-else class="flex flex-col gap-4" @submit.prevent="submit">

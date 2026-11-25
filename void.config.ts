@@ -24,5 +24,9 @@ export default defineConfig({
     // a Worker whose workers.dev and preview URL state the config leaves out.
     workers_dev: false,
     preview_urls: false,
+    // rising.sh is onboarded for Email Sending on the account. Leaving
+    // `email.from` unset keeps Void's setup out of the deploy, which needs a
+    // token scope the CI token lacks; the sender is passed per send instead.
+    send_email: [{ name: "SEND_EMAIL" }],
   },
 });

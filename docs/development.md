@@ -87,15 +87,23 @@ reference at `node_modules/void/docs/reference/cli.md` for flags.
 
 ### Password reset links
 
-A user who forgot their password requests a reset on the sign-in page and asks
-the site owner for the link. List the live links on the deployed database:
+A user who forgot their password requests a reset on the sign-in page. The
+Worker emails the link from `tracker@rising.sh` through its `SEND_EMAIL`
+binding; rising.sh is onboarded for Email Sending on the rising account. Under
+`void dev` the email lands in the local inbox whose URL the dev server prints.
+
+Send no test reset to an address that cannot receive mail. Bounces count against
+the rising.sh sending domain, which other apps share.
+
+When a send fails, the Worker logs the error and stores the link instead, so the
+site owner can pass it on. List the live stored links on the deployed database:
 
 ```sh
 vp exec void db execute --remote "SELECT u.email, l.url, datetime(v.expiresAt / 1000, 'unixepoch') AS expires FROM password_reset_links l JOIN user u ON u.id = l.user_id JOIN verification v ON v.identifier = 'reset-password:' || l.token WHERE v.expiresAt > unixepoch() * 1000 ORDER BY l.created_at DESC"
 ```
 
 Send the URL only to the person who owns that email, through a channel you
-already trust. A link works once, within 24 hours. A used or expired link drops
+already trust. A link works once, within 1 hour. A used or expired link drops
 out of the list. Drop `--remote` to read the local database.
 
 ## Fixture refresh
