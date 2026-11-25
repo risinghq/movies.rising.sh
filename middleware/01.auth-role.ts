@@ -17,6 +17,13 @@ function needsUsernamePage(c: Context): boolean {
 }
 
 export default defineMiddleware(async (c, next) => {
+  // Build files that still reach the Worker (CSS, fonts) need no user context;
+  // skipping it keeps a D1 query off each of them.
+  if (c.req.path.startsWith("/assets/")) {
+    await next();
+    return;
+  }
+
   const user = getUser();
 
   if (!user) {

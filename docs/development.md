@@ -131,6 +131,14 @@ the Worker, and attaches the domain. It records the D1 database and the queue it
 provisions in `void.lock.json`. Commit that file, so later deploys reuse the
 same resources.
 
+The Worker runs in `aws:us-east-1`, next to D1, so a request that reaches it
+crosses to that region. Void lets Cloudflare serve hashed JS files without the
+Worker, but only in apps without middleware. `patches/void@1.11.0.patch` lifts
+that check, because `middleware/01.auth-role.ts` has nothing to do for a build
+file. A Void upgrade drops the patch: carry it forward with `bun patch void`,
+then confirm the built `worker.config.json` lists `!/assets/...` rules under
+`runWorkerFirst`.
+
 ```sh
 bun run release
 ```
