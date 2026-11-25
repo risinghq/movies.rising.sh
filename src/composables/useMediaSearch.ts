@@ -9,9 +9,10 @@ export type LocalResult = {
   releaseDate?: string | null;
   voteAverage?: number | null;
   slug?: string | null;
+  inLibrary: boolean;
 };
 
-export type RemoteResult = MediaSearchCandidate;
+export type RemoteResult = MediaSearchCandidate & { inLibrary: boolean };
 
 type SearchResponse = {
   error?: string;

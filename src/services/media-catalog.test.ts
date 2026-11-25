@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test"
 import { resetDb } from "@/test/d1";
 import { requestUrl } from "@/test/fetch";
 import { findMediaByTmdbIds } from "@/domain/catalog/media";
-import { cacheMediaBySlug } from "./media-catalog";
+import { addEntry, addMedia, addUser } from "@/test/fixtures";
+import { cacheMediaBySlug, searchCatalog } from "./media-catalog";
 
 vi.mock("void/env", () => ({ env: { TMDB_READ_ACCESS_TOKEN: "token" } }));
 
@@ -48,5 +49,35 @@ describe("cacheMediaBySlug", () => {
 
   it("caches nothing when TMDB knows neither id", async () => {
     expect(await cacheMediaBySlug("gone-9")).toBeNull();
+  });
+});
+
+describe("searchCatalog", () => {
+  it("marks only titles in the viewer's library, not every cached title", async () => {
+    tmdb["/3/search/multi"] = {
+      results: [
+        { id: 7, title: "Dune", media_type: "movie" },
+        { id: 8, title: "Dune Two", media_type: "movie" },
+        { id: 9, name: "Dune Show", media_type: "tv" },
+      ],
+    };
+    await addUser({ id: "u1" });
+    const tracked = await addMedia({ tmdbId: 7, title: "Dune" });
+    await addEntry({ userId: "u1", mediaId: tracked });
+    await addMedia({ tmdbId: 8, title: "Dune Two" });
+
+    const signedIn = await searchCatalog({ query: "dune", userId: "u1" });
+    expect(signedIn.local.map((r) => [r.title, r.inLibrary])).toEqual([
+      ["Dune", true],
+      ["Dune Two", false],
+    ]);
+    expect(signedIn.remote.map((r) => [r.title, r.cachedMediaId !== null, r.inLibrary])).toEqual([
+      ["Dune", true, true],
+      ["Dune Two", true, false],
+      ["Dune Show", false, false],
+    ]);
+
+    const anonymous = await searchCatalog({ query: "dune", userId: null });
+    expect([...anonymous.local, ...anonymous.remote].some((r) => r.inLibrary)).toBe(false);
   });
 });
