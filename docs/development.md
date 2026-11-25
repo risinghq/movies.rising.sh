@@ -85,6 +85,19 @@ re-applies migrations. `db seed` resets the local database, reapplies
 migrations, and runs the default `db/seed.ts` file. Use the local Void CLI
 reference at `node_modules/void/docs/reference/cli.md` for flags.
 
+### Password reset links
+
+A user who forgot their password requests a reset on the sign-in page and asks
+the site owner for the link. List the live links on the deployed database:
+
+```sh
+vp exec void db execute --remote "SELECT u.email, l.url, datetime(v.expiresAt / 1000, 'unixepoch') AS expires FROM password_reset_links l JOIN user u ON u.id = l.user_id JOIN verification v ON v.identifier = 'reset-password:' || l.token WHERE v.expiresAt > unixepoch() * 1000 ORDER BY l.created_at DESC"
+```
+
+Send the URL only to the person who owns that email, through a channel you
+already trust. A link works once, within 24 hours. A used or expired link drops
+out of the list. Drop `--remote` to read the local database.
+
 ## Fixture refresh
 
 The committed fixture file is enough for local setup. To refresh it from TMDB,

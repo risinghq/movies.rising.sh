@@ -1,31 +1,45 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { auth } from "void/client";
 import { useRouter } from "@void/vue";
+import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm.vue";
 
 const router = useRouter();
 const email = ref("");
 const password = ref("");
 const name = ref("");
-const mode = ref<"signin" | "signup">("signin");
+const mode = ref<"signin" | "signup" | "forgot">("signin");
 const error = ref("");
 const loading = ref(false);
+const submitLabel = computed(() => {
+  if (loading.value) return "...";
+  return mode.value === "signup" ? "create account" : "sign in";
+});
+
+// Better Auth client calls resolve to `{ data, error }` and may also throw.
+async function unwrap(call: Promise<{ error?: { message?: string } | null }>) {
+  const result = await call;
+  if (result?.error) throw new Error(result.error.message ?? "authentication failed");
+}
+
+function authenticate() {
+  if (mode.value !== "signup") {
+    return auth.signIn.email({ email: email.value, password: password.value });
+  }
+  // `timeZone` is an input additional field, so set it during account creation.
+  return auth.signUp.email({
+    email: email.value,
+    password: password.value,
+    name: name.value || email.value.split("@")[0],
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
+}
 
 async function submit() {
   error.value = "";
   loading.value = true;
   try {
-    if (mode.value === "signup") {
-      // `timeZone` is an input additional field, so set it during account creation.
-      await auth.signUp.email({
-        email: email.value,
-        password: password.value,
-        name: name.value || email.value.split("@")[0],
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      });
-    } else {
-      await auth.signIn.email({ email: email.value, password: password.value });
-    }
+    await unwrap(authenticate());
     await router.visit("/");
   } catch (err) {
     error.value = err instanceof Error ? err.message : "authentication failed";
@@ -37,7 +51,9 @@ async function submit() {
 
 <template>
   <main class="container flex items-center justify-center min-h-[60vh] py-8 sm:py-12">
-    <div class="w-full max-w-sm flex flex-col gap-6">
+    <ForgotPasswordForm v-if="mode === 'forgot'" class="w-full max-w-sm" @back="mode = 'signin'" />
+
+    <div v-else class="w-full max-w-sm flex flex-col gap-6">
       <div class="flex p-1 rounded-xl bg-bg-subtle border border-border gap-1">
         <button
           type="button"
@@ -107,9 +123,18 @@ async function submit() {
           class="w-full py-2.5 rounded-lg border border-accent/40 bg-accent/10 text-fg font-mono text-sm hover:bg-accent/15 transition-colors disabled:opacity-40"
           :disabled="loading"
         >
-          {{ loading ? "..." : mode === "signin" ? "sign in" : "create account" }}
+          {{ submitLabel }}
         </button>
       </form>
+
+      <button
+        v-if="mode === 'signin'"
+        type="button"
+        class="self-center text-xs font-mono text-fg-muted hover:text-fg transition-colors"
+        @click="mode = 'forgot'"
+      >
+        forgot password?
+      </button>
     </div>
   </main>
 </template>

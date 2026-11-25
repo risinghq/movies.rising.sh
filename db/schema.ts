@@ -310,3 +310,13 @@ export const imports = sqliteTable(
   },
   (t) => [index("idx_imports_user_created").on(t.userId, t.createdAt)],
 );
+
+// The latest password reset link per user. The app sends no email, so the site
+// owner reads the link here and passes it on. Better Auth owns the token: a link
+// is live while a `verification` row named `reset-password:<token>` exists.
+export const passwordResetLinks = sqliteTable("password_reset_links", {
+  userId: text("user_id").primaryKey(),
+  token: text("token").notNull(),
+  url: text("url").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
