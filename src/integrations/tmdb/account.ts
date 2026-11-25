@@ -72,26 +72,35 @@ export async function fetchTmdbAccountLists(access: TmdbAccess): Promise<TmdbAcc
   let budget = MAX_PAGES;
 
   for (const list of LISTS) {
-    for (let page = 1; ; page += 1) {
-      if (budget === 0) {
-        lists.truncated.push(list.label);
-        break;
-      }
-      budget -= 1;
-      const { status, body } = await tmdbV4Fetch(
-        `/account/${access.accountId}/${list.path}?page=${page}`,
-        { token: access.accessToken },
-      );
-      if (status !== 200) throw new Error(`TMDB ${list.path} → ${status}`);
-      const parsed = parse(AccountPage, body);
-      for (const row of parsed.results) {
-        const title = mapTitle(row, list.mediaType);
-        if (title) lists[list.key].push(title);
-      }
-      if (page >= (parsed.total_pages ?? 0)) break;
-    }
+    const read = await fetchList(access, list, budget);
+    budget -= read.pages;
+    lists[list.key].push(...read.titles);
+    if (read.truncated) lists.truncated.push(list.label);
   }
   return lists;
+}
+
+/** Reads one list page by page, stopping when `budget` pages are spent. */
+async function fetchList(
+  access: TmdbAccess,
+  list: (typeof LISTS)[number],
+  budget: number,
+): Promise<{ titles: TmdbAccountTitle[]; pages: number; truncated: boolean }> {
+  const titles: TmdbAccountTitle[] = [];
+  for (let page = 1; page <= budget; page += 1) {
+    const { status, body } = await tmdbV4Fetch(
+      `/account/${access.accountId}/${list.path}?page=${page}`,
+      { token: access.accessToken },
+    );
+    if (status !== 200) throw new Error(`TMDB ${list.path} → ${status}`);
+    const parsed = parse(AccountPage, body);
+    for (const row of parsed.results) {
+      const title = mapTitle(row, list.mediaType);
+      if (title) titles.push(title);
+    }
+    if (page >= (parsed.total_pages ?? 0)) return { titles, pages: page, truncated: false };
+  }
+  return { titles, pages: budget, truncated: true };
 }
 
 function mapTitle(

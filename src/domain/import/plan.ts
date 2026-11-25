@@ -112,30 +112,47 @@ function foldIntents(items: readonly ImportItem[]): Map<string, TitleIntent> {
     const mediaId = toMediaId(item.media.mediaType, item.media.tmdbId);
     let intent = intents.get(mediaId);
     if (!intent) {
-      intent = {
-        media: item.media,
-        hasPlays: false,
-        rating: null,
-        planned: false,
-        dropped: false,
-        favorite: false,
-        note: null,
-      };
+      intent = emptyIntent(item.media);
       intents.set(mediaId, intent);
     }
-    if (item.kind === "play") intent.hasPlays = true;
-    if (item.kind === "planned") intent.planned = true;
-    if (item.kind === "dropped") intent.dropped = true;
-    if (item.kind === "favorite") {
-      intent.favorite = true;
-      intent.note = item.note ?? intent.note;
-    }
-    // Between sources, the most recently given score wins.
-    if (item.kind === "rating" && (!intent.rating || item.ratedAt > intent.rating.ratedAt)) {
-      intent.rating = { score100: item.score100, ratedAt: item.ratedAt };
-    }
+    applyItem(intent, item);
   }
   return intents;
+}
+
+function emptyIntent(media: ImportMediaRef): TitleIntent {
+  return {
+    media,
+    hasPlays: false,
+    rating: null,
+    planned: false,
+    dropped: false,
+    favorite: false,
+    note: null,
+  };
+}
+
+function applyItem(intent: TitleIntent, item: ImportItem): void {
+  switch (item.kind) {
+    case "play":
+      intent.hasPlays = true;
+      return;
+    case "planned":
+      intent.planned = true;
+      return;
+    case "dropped":
+      intent.dropped = true;
+      return;
+    case "favorite":
+      intent.favorite = true;
+      intent.note = item.note ?? intent.note;
+      return;
+    case "rating":
+      // Between sources, the most recently given score wins.
+      if (!intent.rating || item.ratedAt > intent.rating.ratedAt) {
+        intent.rating = { score100: item.score100, ratedAt: item.ratedAt };
+      }
+  }
 }
 
 function planPlays(
