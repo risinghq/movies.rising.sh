@@ -6,6 +6,11 @@ export type EpisodeRecord = {
   airDate: string | null;
 };
 
+export type SeasonSummary = {
+  seasonNumber: number;
+  episodeCount: number;
+};
+
 export type SeasonEpisodes = {
   seasonNumber: number;
   episodes: EpisodeRecord[];

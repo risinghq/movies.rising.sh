@@ -1,22 +1,26 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import type { Props } from "./index.server";
-import { STATS_MIN_SCORES, STATS_MIN_TRACKED } from "@/domain/insights/title-stats";
 import { useTracking } from "@/composables/useTracking";
 import { useToast } from "@/composables/useToast";
 import { useHydrationPoll } from "@/composables/useHydrationPoll";
 import EpisodeList from "@/components/media/EpisodeList.vue";
 import FavoriteButton from "@/components/media/FavoriteButton.vue";
 import MediaHeader from "@/components/media/MediaHeader.vue";
-import { LIBRARY_STATUSES, statusBadge, statusBg } from "@/shared/library-status";
+import TitleStats from "@/components/media/TitleStats.vue";
+import { LIBRARY_STATUSES, statusBadge } from "@/shared/library-status";
 import { airedText, episodeSummary } from "@/shared/format-media";
-import type { SeasonEpisodes } from "@/domain/catalog/episodes";
+import type { EpisodeRecord, SeasonEpisodes, SeasonSummary } from "@/domain/catalog/episodes";
 import type { ShowViewDto } from "@/shared/tracking";
 
 const props = defineProps<Props>();
 const toast = useToast();
 
-const seasons = ref<SeasonEpisodes[]>(props.seasons);
+const seasons = ref<SeasonSummary[]>(props.seasons);
+// Episodes are public catalog data, so a loaded season stays loaded across
+// show-view refreshes, which update only the watched marks and counts.
+const seasonEpisodes = ref(new Map<number, EpisodeRecord[]>());
+storeSeason(props.firstSeason);
 const seasonCount = ref(props.media.seasonCount);
 const episodeTotal = ref(props.media.episodeCount);
 const episodeHydrationError = ref(props.media.episodesError);
@@ -39,8 +43,21 @@ async function fetchShowView(): Promise<ShowViewDto> {
   return payload;
 }
 
+function storeSeason(season: SeasonEpisodes | null) {
+  if (!season) return;
+  seasonEpisodes.value = new Map(seasonEpisodes.value).set(season.seasonNumber, season.episodes);
+}
+
+async function loadSeason(seasonNumber: number) {
+  const query = `mediaId=${encodeURIComponent(props.media.id)}&season=${seasonNumber}`;
+  const res = await fetch(`/api/media/episodes?${query}`);
+  if (!res.ok) throw new Error("request failed");
+  storeSeason({ seasonNumber, episodes: (await res.json()) as EpisodeRecord[] });
+}
+
 function applyShowView(view: ShowViewDto) {
   seasons.value = view.seasons;
+  storeSeason(view.firstSeason);
   seasonCount.value = view.seasonCount;
   episodeTotal.value = view.episodeCount;
   watchedKeys.value = view.watchedKeys;
@@ -153,22 +170,6 @@ const aired = computed(() =>
   airedText(props.media.releaseDate, props.media.lastAirDate, props.media.mediaType === "show"),
 );
 const showOtherTitles = ref(false);
-
-const showStats = computed(() => props.stats.trackedCount >= STATS_MIN_TRACKED);
-const showTrackScore = computed(
-  () => props.stats.scoreCount >= STATS_MIN_SCORES && props.stats.trackScore !== null,
-);
-const trackScore5 = computed(() =>
-  props.stats.trackScore !== null ? (props.stats.trackScore / 20).toFixed(1) : null,
-);
-const statusBar = computed(() => {
-  const total = props.stats.trackedCount || 1;
-  return LIBRARY_STATUSES.map((status) => ({
-    status,
-    count: props.stats.statusCounts[status],
-    pct: (props.stats.statusCounts[status] / total) * 100,
-  })).filter((seg) => seg.count > 0);
-});
 
 async function onStatusChange(e: Event) {
   const target = e.target as HTMLSelectElement;
@@ -368,6 +369,8 @@ onMounted(() => {
         <h2 class="text-sm font-mono text-fg-muted">episodes</h2>
         <EpisodeList
           :seasons="seasons"
+          :episodes="seasonEpisodes"
+          :load-season="loadSeason"
           :watched-keys="watchedKeys"
           :can-log="canLogEpisodes"
           :saving="saving"
@@ -376,37 +379,7 @@ onMounted(() => {
         />
       </section>
 
-      <section v-if="showStats" class="flex flex-col gap-4">
-        <h2 class="text-sm font-mono text-fg-muted">on track</h2>
-        <div class="flex flex-col gap-3">
-          <div class="flex items-center gap-4 text-sm font-mono">
-            <span v-if="showTrackScore" class="text-fg">
-              ★ {{ trackScore5 }}/5
-              <span class="text-fg-subtle">({{ stats.scoreCount }})</span>
-            </span>
-            <span v-if="stats.favoriteCount > 0" class="text-fg-muted"
-              >♥ {{ stats.favoriteCount }}</span
-            >
-            <span class="ml-auto text-fg-subtle">{{ stats.trackedCount }} tracking</span>
-          </div>
-          <div class="flex h-2 rounded-full overflow-hidden bg-bg-elevated">
-            <div
-              v-for="seg in statusBar"
-              :key="seg.status"
-              class="h-full"
-              :class="statusBg(seg.status)"
-              :style="{ width: `${seg.pct}%` }"
-              :title="`${seg.status}: ${seg.count}`"
-            />
-          </div>
-          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs font-mono text-fg-subtle">
-            <span v-for="seg in statusBar" :key="seg.status" class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full" :class="statusBg(seg.status)" />
-              {{ seg.status }} {{ seg.count }}
-            </span>
-          </div>
-        </div>
-      </section>
+      <TitleStats :stats="stats" />
     </article>
   </main>
 </template>

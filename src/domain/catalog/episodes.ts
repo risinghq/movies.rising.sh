@@ -1,12 +1,12 @@
-import { and, asc, eq, inArray, isNull, lte, or } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNull, lte, or } from "drizzle-orm";
 import { db } from "void/db";
 import { episodes, media } from "@schema";
 import { insertChunks, selectByIds, type Statement } from "@/db/kernel";
 import type { EpisodeInput } from "@/shared/types/metadata";
 import type { EpisodeRef } from "@/shared/tracking";
-import type { SeasonEpisodes } from "@/shared/catalog";
+import type { EpisodeRecord, SeasonEpisodes, SeasonSummary } from "@/shared/catalog";
 
-export type { SeasonEpisodes };
+export type { EpisodeRecord, SeasonEpisodes, SeasonSummary };
 
 export type EpisodeRuntime = {
   mediaId: string;
@@ -32,8 +32,20 @@ export async function episodeRuntimesByMedia(
   );
 }
 
-export async function listEpisodesBySeason(mediaId: string): Promise<SeasonEpisodes[]> {
-  const rows = await db
+export async function listSeasonSummaries(mediaId: string): Promise<SeasonSummary[]> {
+  return db
+    .select({ seasonNumber: episodes.seasonNumber, episodeCount: count() })
+    .from(episodes)
+    .where(eq(episodes.mediaId, mediaId))
+    .groupBy(episodes.seasonNumber)
+    .orderBy(asc(episodes.seasonNumber));
+}
+
+export async function listSeasonEpisodes(
+  mediaId: string,
+  seasonNumber: number,
+): Promise<EpisodeRecord[]> {
+  return db
     .select({
       seasonNumber: episodes.seasonNumber,
       episodeNumber: episodes.episodeNumber,
@@ -42,19 +54,8 @@ export async function listEpisodesBySeason(mediaId: string): Promise<SeasonEpiso
       airDate: episodes.airDate,
     })
     .from(episodes)
-    .where(eq(episodes.mediaId, mediaId))
-    .orderBy(asc(episodes.seasonNumber), asc(episodes.episodeNumber));
-
-  const seasons: SeasonEpisodes[] = [];
-  let current: SeasonEpisodes | null = null;
-  for (const row of rows) {
-    if (!current || current.seasonNumber !== row.seasonNumber) {
-      current = { seasonNumber: row.seasonNumber, episodes: [] };
-      seasons.push(current);
-    }
-    current.episodes.push(row);
-  }
-  return seasons;
+    .where(and(eq(episodes.mediaId, mediaId), eq(episodes.seasonNumber, seasonNumber)))
+    .orderBy(asc(episodes.episodeNumber));
 }
 
 // An episode counts as aired when its air date has passed, or is unknown. ISO

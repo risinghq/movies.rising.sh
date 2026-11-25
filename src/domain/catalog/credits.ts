@@ -164,3 +164,17 @@ export function groupByDepartment<T extends { department: string }>(items: T[]):
   }
   return Array.from(byDepartment, ([department, members]) => ({ department, members }));
 }
+
+/** Keeps the first `limit` members of each department, and every member of
+ * the `expanded` department. `total` is the department's full size. */
+export function capDepartments<T>(
+  groups: CrewGroup<T>[],
+  limit: number,
+  expanded: string | null,
+): (CrewGroup<T> & { total: number })[] {
+  return groups.map(({ department, members }) => ({
+    department,
+    total: members.length,
+    members: department === expanded ? members : members.slice(0, limit),
+  }));
+}
