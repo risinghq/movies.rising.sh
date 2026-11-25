@@ -516,8 +516,8 @@ input[type="search"]::-webkit-search-results-decoration {
   border-radius: 2px;
 }
 
+/* No display here: an unlayered display beats the template's max-sm:hidden. */
 .seasons {
-  display: flex;
   gap: 0.25rem;
   overflow-x: auto;
   scrollbar-width: thin;
