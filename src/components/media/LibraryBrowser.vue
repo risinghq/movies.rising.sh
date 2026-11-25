@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import MediaCollection from "./MediaCollection.vue";
 import LibraryEntry from "./LibraryEntry.vue";
 import LayoutToggle from "@/components/ui/LayoutToggle.vue";
@@ -68,6 +68,16 @@ const filteredEntries = computed(() => {
     return b.updatedAt - a.updatedAt;
   });
 });
+
+// A full library is hundreds of tracked cards; rendering them all at once kept
+// the page blank for seconds. 48 fills whole rows at every grid width.
+const PAGE_SIZE = 48;
+const shownCount = ref(PAGE_SIZE);
+watch([filterStatus, filterType, sortKey], () => {
+  shownCount.value = PAGE_SIZE;
+});
+const shownEntries = computed(() => filteredEntries.value.slice(0, shownCount.value));
+const hiddenCount = computed(() => filteredEntries.value.length - shownEntries.value.length);
 
 function onEntryUpdate(update: EntryUpdate) {
   const entry = localEntries.value.find((item) => item.id === update.id);
@@ -167,7 +177,7 @@ function onEntryUpdate(update: EntryUpdate) {
 
     <MediaCollection v-else :layout="layout">
       <LibraryEntry
-        v-for="entry in filteredEntries"
+        v-for="entry in shownEntries"
         :key="entry.id"
         :layout="layout"
         :id="entry.id"
@@ -187,5 +197,14 @@ function onEntryUpdate(update: EntryUpdate) {
         @update="onEntryUpdate"
       />
     </MediaCollection>
+
+    <button
+      v-if="hiddenCount > 0"
+      type="button"
+      class="self-center px-4 py-2 rounded-lg border border-border bg-bg-subtle text-xs font-mono text-fg-muted hover:border-border-hover hover:text-fg transition-colors focus-ring"
+      @click="shownCount += PAGE_SIZE"
+    >
+      show more <span class="text-fg-subtle">({{ hiddenCount }} left)</span>
+    </button>
   </section>
 </template>
