@@ -100,17 +100,17 @@ export async function findMediaByTmdbIds(items: Array<{ mediaType: MediaType; tm
     byType.set(item.mediaType, list);
   }
 
-  const results: MediaRecord[] = [];
-  for (const [mediaType, ids] of byType) {
-    const rows = await selectByIds(ids, (batch) =>
-      db
-        .select()
-        .from(media)
-        .where(and(eq(media.mediaType, mediaType), inArray(media.tmdbId, batch))),
-    );
-    results.push(...rows);
-  }
-  return results;
+  const perType = await Promise.all(
+    [...byType].map(([mediaType, ids]) =>
+      selectByIds(ids, (batch) =>
+        db
+          .select()
+          .from(media)
+          .where(and(eq(media.mediaType, mediaType), inArray(media.tmdbId, batch))),
+      ),
+    ),
+  );
+  return perType.flat();
 }
 
 export async function upsertMediaFromTmdb(input: UpsertMediaInput) {

@@ -26,7 +26,10 @@ export const loader = defineHandler(async (c) => {
   const existing = await findPersonBySlug(slug);
   if (!existing) return c.notFound();
 
-  const { person, acting, crew } = await ensurePersonDetails(existing);
+  const [{ person, acting, crew }, isFavorited] = await Promise.all([
+    ensurePersonDetails(existing),
+    user ? isPersonFavorited(user.id, existing.id) : false,
+  ]);
 
   const entries = [...acting, ...crew];
   const catalogRows =
@@ -48,8 +51,6 @@ export const loader = defineHandler(async (c) => {
     department,
     items: members.map(toView),
   }));
-
-  const isFavorited = user ? await isPersonFavorited(user.id, person.id) : false;
 
   return {
     person: {

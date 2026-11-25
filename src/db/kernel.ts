@@ -24,9 +24,8 @@ export async function selectByIds<Id extends string | number, R>(
   ids: readonly Id[],
   run: (batch: Id[]) => Promise<R[]>,
 ): Promise<R[]> {
-  const out: R[] = [];
-  for (const part of chunk([...ids], PARAM_CAP)) out.push(...(await run(part)));
-  return out;
+  const parts = await Promise.all(chunk([...new Set(ids)], PARAM_CAP).map(run));
+  return parts.flat();
 }
 
 // Runs statements as ONE atomic D1 batch (single transaction, single round

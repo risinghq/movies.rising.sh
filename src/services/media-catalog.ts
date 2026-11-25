@@ -21,28 +21,23 @@ export type MediaSearchResult = TmdbMediaResult & {
 export async function searchCatalog(input: { query: string; limit?: number }) {
   // An empty query has nothing to match; report whether remote is wired so the
   // search page can tailor its empty state without importing the token check.
+  const remoteEnabled = Boolean(tmdbToken());
   if (!input.query.trim()) {
-    return { remoteEnabled: Boolean(tmdbToken()), local: [], remote: [] as MediaSearchResult[] };
+    return { remoteEnabled, local: [], remote: [] as MediaSearchResult[] };
   }
 
-  const local = await searchLocalMedia(input.query, input.limit ?? 20);
-
-  if (!tmdbToken()) {
-    return {
-      remoteEnabled: false,
-      local,
-      remote: [] as MediaSearchResult[],
-    };
-  }
-
-  const remote = await searchTmdbMedia({ query: input.query, limit: input.limit ?? 20 });
+  const limit = input.limit ?? 20;
+  const [local, remote] = await Promise.all([
+    searchLocalMedia(input.query, limit),
+    remoteEnabled ? searchTmdbMedia({ query: input.query, limit }) : [],
+  ]);
   const cachedRows = await findMediaByTmdbIds(
     remote.map((item) => ({ mediaType: item.mediaType, tmdbId: item.tmdbId })),
   );
   const cachedMap = new Map(cachedRows.map((row) => [`${row.mediaType}:${row.tmdbId}`, row.id]));
 
   return {
-    remoteEnabled: true,
+    remoteEnabled,
     local,
     remote: remote.map((item) => {
       const cacheKey = `${item.mediaType}:${item.tmdbId}`;

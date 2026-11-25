@@ -15,6 +15,10 @@ export async function tmdbFetch<T>(path: string, params: Record<string, string> 
   url.searchParams.set("language", "en-US");
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
 
+  const cache = edgeCache();
+  const hit = await cache?.match(url);
+  if (hit) return hit.json() as Promise<T>;
+
   const headers = { Authorization: `Bearer ${token}`, Accept: "application/json" };
   let response = await fetch(url, { headers });
   for (let retry = 0; response.status === 429 && retry < MAX_RATE_RETRIES; retry++) {
@@ -22,7 +26,29 @@ export async function tmdbFetch<T>(path: string, params: Record<string, string> 
     response = await fetch(url, { headers });
   }
   if (!response.ok) throw new Error(`TMDB ${path} → ${response.status}`);
-  return response.json() as Promise<T>;
+  const body = await response.text();
+  await cache?.put(url, cachedResponse(body)).catch(() => undefined);
+  return JSON.parse(body) as T;
+}
+
+// TMDB data changes far more slowly than pages read it, so a successful GET is
+// kept in the Workers edge cache, keyed by its URL. The token travels in a
+// header and never enters the key. Hydration TTLs are days long, so a few hours
+// of edge staleness is invisible to them. Outside Workers (tests, scripts)
+// there is no `caches.default` and every call reaches TMDB.
+const EDGE_TTL_SECONDS = 6 * 60 * 60;
+
+function edgeCache(): Cache | undefined {
+  return (globalThis as { caches?: { default?: Cache } }).caches?.default;
+}
+
+function cachedResponse(body: string): Response {
+  return new Response(body, {
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": `public, max-age=${EDGE_TTL_SECONDS}`,
+    },
+  });
 }
 
 // TMDB answers bursts above about 40 requests a second with 429 and a
