@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { auth } from "void/client";
 import { useRouter } from "@void/vue";
+import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm.vue";
 
 const router = useRouter();
 const email = ref("");
@@ -10,7 +11,10 @@ const name = ref("");
 const mode = ref<"signin" | "signup" | "forgot">("signin");
 const error = ref("");
 const loading = ref(false);
-const resetRequested = ref(false);
+const submitLabel = computed(() => {
+  if (loading.value) return "...";
+  return mode.value === "signup" ? "create account" : "sign in";
+});
 
 // Better Auth client calls resolve to `{ data, error }` and may also throw.
 async function unwrap(call: Promise<{ error?: { message?: string } | null }>) {
@@ -18,61 +22,46 @@ async function unwrap(call: Promise<{ error?: { message?: string } | null }>) {
   if (result?.error) throw new Error(result.error.message ?? "authentication failed");
 }
 
-async function authenticate() {
-  if (mode.value === "signup") {
-    // `timeZone` is an input additional field, so set it during account creation.
-    await unwrap(
-      auth.signUp.email({
-        email: email.value,
-        password: password.value,
-        name: name.value || email.value.split("@")[0],
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      }),
-    );
-  } else {
-    await unwrap(auth.signIn.email({ email: email.value, password: password.value }));
+function authenticate() {
+  if (mode.value !== "signup") {
+    return auth.signIn.email({ email: email.value, password: password.value });
   }
-  await router.visit("/");
-}
-
-async function requestReset() {
-  await unwrap(auth.requestPasswordReset({ email: email.value, redirectTo: "/reset-password" }));
-  resetRequested.value = true;
+  // `timeZone` is an input additional field, so set it during account creation.
+  return auth.signUp.email({
+    email: email.value,
+    password: password.value,
+    name: name.value || email.value.split("@")[0],
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
 }
 
 async function submit() {
   error.value = "";
   loading.value = true;
   try {
-    await (mode.value === "forgot" ? requestReset() : authenticate());
+    await unwrap(authenticate());
+    await router.visit("/");
   } catch (err) {
     error.value = err instanceof Error ? err.message : "authentication failed";
   } finally {
     loading.value = false;
   }
 }
-
-function setMode(next: typeof mode.value) {
-  mode.value = next;
-  error.value = "";
-  resetRequested.value = false;
-}
 </script>
 
 <template>
   <main class="container flex items-center justify-center min-h-[60vh] py-8 sm:py-12">
-    <div class="w-full max-w-sm flex flex-col gap-6">
-      <div
-        v-if="mode !== 'forgot'"
-        class="flex p-1 rounded-xl bg-bg-subtle border border-border gap-1"
-      >
+    <ForgotPasswordForm v-if="mode === 'forgot'" class="w-full max-w-sm" @back="mode = 'signin'" />
+
+    <div v-else class="w-full max-w-sm flex flex-col gap-6">
+      <div class="flex p-1 rounded-xl bg-bg-subtle border border-border gap-1">
         <button
           type="button"
           class="flex-1 py-2 rounded-lg text-sm font-mono transition-all duration-150"
           :class="
             mode === 'signin' ? 'bg-bg-elevated text-fg shadow-sm' : 'text-fg-muted hover:text-fg'
           "
-          @click="setMode('signin')"
+          @click="mode = 'signin'"
         >
           sign in
         </button>
@@ -82,23 +71,13 @@ function setMode(next: typeof mode.value) {
           :class="
             mode === 'signup' ? 'bg-bg-elevated text-fg shadow-sm' : 'text-fg-muted hover:text-fg'
           "
-          @click="setMode('signup')"
+          @click="mode = 'signup'"
         >
           sign up
         </button>
       </div>
-      <div v-else class="flex flex-col gap-1">
-        <h1 class="text-base font-mono text-fg">reset your password</h1>
-        <p class="text-sm text-fg-muted">
-          The site sends no email. Ask the site owner for your reset link after you submit.
-        </p>
-      </div>
 
-      <p v-if="resetRequested" class="text-sm text-fg font-mono" role="status">
-        Request saved. Ask the site owner for your reset link. It works for 24 hours.
-      </p>
-
-      <form v-else class="flex flex-col gap-4" @submit.prevent="submit">
+      <form class="flex flex-col gap-4" @submit.prevent="submit">
         <div class="flex flex-col gap-3">
           <div v-if="mode === 'signup'" class="flex flex-col gap-1.5">
             <label class="text-xs font-mono text-fg-muted" for="name">name</label>
@@ -123,7 +102,7 @@ function setMode(next: typeof mode.value) {
             />
           </div>
 
-          <div v-if="mode !== 'forgot'" class="flex flex-col gap-1.5">
+          <div class="flex flex-col gap-1.5">
             <label class="text-xs font-mono text-fg-muted" for="password">password</label>
             <input
               id="password"
@@ -144,15 +123,7 @@ function setMode(next: typeof mode.value) {
           class="w-full py-2.5 rounded-lg border border-accent/40 bg-accent/10 text-fg font-mono text-sm hover:bg-accent/15 transition-colors disabled:opacity-40"
           :disabled="loading"
         >
-          {{
-            loading
-              ? "..."
-              : mode === "signin"
-                ? "sign in"
-                : mode === "signup"
-                  ? "create account"
-                  : "request reset link"
-          }}
+          {{ submitLabel }}
         </button>
       </form>
 
@@ -160,17 +131,9 @@ function setMode(next: typeof mode.value) {
         v-if="mode === 'signin'"
         type="button"
         class="self-center text-xs font-mono text-fg-muted hover:text-fg transition-colors"
-        @click="setMode('forgot')"
+        @click="mode = 'forgot'"
       >
         forgot password?
-      </button>
-      <button
-        v-else-if="mode === 'forgot'"
-        type="button"
-        class="self-center text-xs font-mono text-fg-muted hover:text-fg transition-colors"
-        @click="setMode('signin')"
-      >
-        back to sign in
       </button>
     </div>
   </main>
