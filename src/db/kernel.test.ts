@@ -51,6 +51,15 @@ describe("selectByIds", () => {
     expect(result.map((r) => r.id)).toEqual(ids);
   });
 
+  it("binds a repeated id once", async () => {
+    const batches: number[][] = [];
+    await selectByIds([7, 7, 8, 7], async (batch) => {
+      batches.push(batch);
+      return [];
+    });
+    expect(batches).toEqual([[7, 8]]);
+  });
+
   it("never calls run for an empty id list", async () => {
     let called = false;
     const result = await selectByIds([], async () => {

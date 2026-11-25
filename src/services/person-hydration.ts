@@ -7,7 +7,7 @@ import {
   type PersonRecord,
 } from "@/domain/catalog/people";
 import { runBatch } from "@/db/kernel";
-import { summarizeCause } from "@/domain/hydration";
+import { DETAILS_TTL_MS, hydrationState, summarizeCause } from "@/domain/hydration";
 import { attempt } from "@/result";
 import type { FilmographyEntry, PersonCrewEntry } from "@/shared/types/metadata";
 
@@ -38,6 +38,12 @@ export async function ensurePersonDetails(person: PersonRecord): Promise<PersonV
   }
 
   const detail = fetched.value;
+  // Fresh stored scalars are what a refresh would write, so a view skips the
+  // write and the re-read. The filmography is never stored and always comes
+  // from the fetch.
+  if (hydrationState(person.detailsHydratedAt, person.detailsError, DETAILS_TTL_MS) === "fresh") {
+    return { person, acting: detail.acting, crew: detail.crew };
+  }
   const written = await attempt(
     runBatch(personScalarsWrite(person.id, detail.scalars)),
     (cause) => cause,
