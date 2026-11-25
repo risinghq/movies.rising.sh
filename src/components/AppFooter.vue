@@ -23,6 +23,10 @@ const modalRef = ref<InstanceType<typeof Modal> | null>(null);
       </button>
       <span class="font-mono">void + vite+</span>
     </div>
+    <p class="container pb-4 text-fg-subtle/60 text-xs">
+      This product uses the TMDB API but is not endorsed or certified by TMDB. It uses Trakt but is
+      not endorsed or certified by Trakt.
+    </p>
 
     <Modal ref="modalRef" title="keyboard shortcuts" class="w-auto max-w-lg">
       <p class="mb-2 font-mono text-fg-subtle">global</p>

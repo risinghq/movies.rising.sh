@@ -192,7 +192,16 @@ adds only what is missing. The report keeps the first run's counts.
 
 Rows the import creates carry its `importId`. Undo deletes those plays and
 favorites, and deletes the import's entries unless the user has since logged a
-play for the title. Values the import filled into an existing entry stay.
+play for the title. Values the import filled into an existing entry stay. A
+`failed` import can be undone too, because the consumer may have written some
+batches before its last attempt failed.
+
+The `/import` page (`pages/import/`) shows the state of the import named by
+`?id=`: Review for `scanned`, a polling progress view for `importing`, the
+report and Undo for `done`, and Undo for `failed`. Without `?id=` it shows the
+sources and past imports. `src/composables/useImportApi.ts` calls the routes and
+keeps a source's pending handshake in `sessionStorage` across the source's
+approval page.
 
 The stored items are capped at 1.9 MB, under the D1 2 MB value limit; that is
 about 15,000 plays.

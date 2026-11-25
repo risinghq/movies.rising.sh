@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import type { Props } from "./index.server";
-import { useRouter } from "@void/vue";
+import { Link, useRouter } from "@void/vue";
 import MediaCard from "@/components/media/MediaCard.vue";
 import MediaCollection from "@/components/media/MediaCollection.vue";
 import ContinueCard from "@/components/media/ContinueCard.vue";
@@ -56,6 +56,14 @@ function goHomeSearch() {
       <p class="text-sm text-fg-subtle">
         press <kbd class="font-mono">⌘K</kbd> to search a title and log your first watch
       </p>
+      <Link
+        href="/import"
+        class="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-bg-subtle px-4 py-3 text-sm hover:border-border-hover transition-colors"
+      >
+        <span class="i-lucide:download w-4 h-4 text-fg-muted" aria-hidden="true" />
+        <span class="text-fg-muted">coming from Trakt or TMDB?</span>
+        <span class="font-mono text-fg">bring your history</span>
+      </Link>
     </section>
 
     <LibraryBrowser
