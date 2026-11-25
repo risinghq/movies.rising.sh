@@ -16,7 +16,8 @@
       }
     ],
     "placement": {
-      "mode": "smart"
+      "mode": "targeted",
+      "region": "aws:us-east-1"
     }
   },
   "resolved": {
@@ -34,6 +35,10 @@
         "name": "SEND_EMAIL"
       }
     ],
+    "placement": {
+      "mode": "targeted",
+      "region": "aws:us-east-1"
+    },
     "account_id": "87dbfa4b79d775c28dda68b15f58a0cb",
     "d1_databases": [
       {
@@ -43,10 +48,7 @@
         "migrations_dir": "./db/migrations"
       }
     ],
-    "compatibility_date": "2026-02-24",
-    "placement": {
-      "mode": "smart"
-    }
+    "compatibility_date": "2026-02-24"
   },
-  "text": "{\n  \"name\": \"movies\",\n  \"routes\": [\n    {\n      \"pattern\": \"movies.rising.sh\",\n      \"custom_domain\": true\n    }\n  ],\n  \"workers_dev\": false,\n  \"preview_urls\": false,\n  \"send_email\": [\n    {\n      \"name\": \"SEND_EMAIL\"\n    }\n  ],\n  \"account_id\": \"87dbfa4b79d775c28dda68b15f58a0cb\",\n  \"d1_databases\": [\n    {\n      \"binding\": \"DB\",\n      \"database_name\": \"movies-db\",\n      \"database_id\": \"421ef1fd-2272-456e-af5f-3c22cdbecfeb\",\n      \"migrations_dir\": \"./db/migrations\"\n    }\n  ],\n  \"compatibility_date\": \"2026-02-24\",\n  \"placement\": {\n    \"mode\": \"smart\"\n  }\n}\n"
+  "text": "{\n  \"name\": \"movies\",\n  \"routes\": [\n    {\n      \"pattern\": \"movies.rising.sh\",\n      \"custom_domain\": true\n    }\n  ],\n  \"workers_dev\": false,\n  \"preview_urls\": false,\n  \"send_email\": [\n    {\n      \"name\": \"SEND_EMAIL\"\n    }\n  ],\n  \"placement\": {\n    \"mode\": \"targeted\",\n    \"region\": \"aws:us-east-1\"\n  },\n  \"account_id\": \"87dbfa4b79d775c28dda68b15f58a0cb\",\n  \"d1_databases\": [\n    {\n      \"binding\": \"DB\",\n      \"database_name\": \"movies-db\",\n      \"database_id\": \"421ef1fd-2272-456e-af5f-3c22cdbecfeb\",\n      \"migrations_dir\": \"./db/migrations\"\n    }\n  ],\n  \"compatibility_date\": \"2026-02-24\"\n}\n"
 }
