@@ -24,8 +24,8 @@ const modalRef = ref<InstanceType<typeof Modal> | null>(null);
       <span class="font-mono">void + vite+</span>
     </div>
     <p class="container pb-4 text-fg-subtle/60 text-xs">
-      This product uses the TMDB API but is not endorsed or certified by TMDB. It uses Trakt but is
-      not endorsed or certified by Trakt.
+      This product uses the TMDB API but is not endorsed or certified by TMDB. movies.rising.sh uses
+      Trakt but is not endorsed or certified by Trakt.
       <a class="link-subtle underline underline-offset-2" href="https://rising.sh/privacy/#movies"
         >privacy</a
       >
