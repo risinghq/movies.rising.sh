@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Link } from "@void/vue";
 import { tmdbImage } from "@/shared/tmdb-image";
 
 defineProps<{
@@ -6,16 +7,12 @@ defineProps<{
   subtitle?: string | null;
   year?: string | null;
   posterPath?: string | null;
-  slug?: string | null;
+  slug: string;
 }>();
 </script>
 
 <template>
-  <component
-    :is="slug ? 'a' : 'div'"
-    :href="slug ? `/media/${slug}` : undefined"
-    class="group flex flex-col gap-2"
-  >
+  <Link :href="`/media/${slug}`" class="group flex flex-col gap-2 focus-ring rounded-lg">
     <div class="poster-wrap rounded-lg overflow-hidden bg-bg-elevated">
       <img
         v-if="posterPath"
@@ -34,8 +31,7 @@ defineProps<{
     </div>
     <div class="flex flex-col gap-0.5 min-w-0">
       <span
-        class="font-mono text-xs leading-snug line-clamp-2"
-        :class="slug ? 'text-fg group-hover:text-accent transition-colors' : 'text-fg'"
+        class="font-mono text-xs leading-snug line-clamp-2 text-fg group-hover:text-accent transition-colors"
       >
         {{ title }}
       </span>
@@ -44,5 +40,5 @@ defineProps<{
       </span>
       <span v-if="year" class="font-mono text-[0.65rem] text-fg-subtle">{{ year }}</span>
     </div>
-  </component>
+  </Link>
 </template>

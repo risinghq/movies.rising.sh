@@ -1,6 +1,7 @@
 import { defineHandler, defineHead } from "void";
 import type { InferProps } from "void";
 import { pageHead } from "@/shared/head";
+import { slugify } from "@/shared/slug";
 import { tmdbImage } from "@/shared/tmdb-image";
 import { getUser } from "void/auth";
 import { findPersonBySlug } from "@/domain/catalog/people";
@@ -18,8 +19,23 @@ type FilmographyView = {
   subtitle: string | null;
   year: string | null;
   posterPath: string | null;
-  slug: string | null;
+  slug: string;
 };
+
+// TMDB lists one credit per job or role, so a writer-producer's film shows up
+// twice in a department. Keep one card that names every job.
+function mergeByTitle(items: FilmographyView[]): FilmographyView[] {
+  const bySlug = new Map<string, FilmographyView>();
+  for (const item of items) {
+    const seen = bySlug.get(item.slug);
+    if (!seen) bySlug.set(item.slug, item);
+    else if (item.subtitle && item.subtitle !== seen.subtitle) {
+      const subtitle = seen.subtitle ? `${seen.subtitle}, ${item.subtitle}` : item.subtitle;
+      bySlug.set(item.slug, { ...seen, subtitle });
+    }
+  }
+  return [...bySlug.values()];
+}
 
 export const loader = defineHandler(async (c) => {
   const slug = c.req.param("slug") as string;
@@ -46,12 +62,14 @@ export const loader = defineHandler(async (c) => {
     subtitle: e.subtitle,
     year: e.date ? e.date.slice(0, 4) : null,
     posterPath: e.posterPath,
-    slug: slugByKey.get(`${e.mediaType}:${e.tmdbId}`) ?? null,
+    // A title outside the catalog links by its TMDB slug; the title page caches
+    // it on first visit.
+    slug: slugByKey.get(`${e.mediaType}:${e.tmdbId}`) ?? slugify(e.title, e.tmdbId),
   });
 
   const crewGroups = groupByDepartment(crew).map(({ department, members }) => ({
     department,
-    items: members.map(toView),
+    items: mergeByTitle(members.map(toView)),
   }));
 
   return {
@@ -66,7 +84,7 @@ export const loader = defineHandler(async (c) => {
       placeOfBirth: person.placeOfBirth,
       biography: person.biography,
     },
-    acting: acting.map(toView),
+    acting: mergeByTitle(acting.map(toView)),
     crewGroups,
     isFavorited,
     user: user ?? null,

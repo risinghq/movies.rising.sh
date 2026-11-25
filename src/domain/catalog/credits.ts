@@ -155,6 +155,51 @@ export async function crewByMedia(mediaIds: readonly string[]): Promise<CrewRow[
   );
 }
 
+// TMDB's department names, in the order a viewer looks for them: who made the
+// title before who built it. A department not listed follows, by name.
+const DEPARTMENT_ORDER = [
+  "Directing",
+  "Writing",
+  "Creator",
+  "Production",
+  "Sound",
+  "Camera",
+  "Editing",
+  "Art",
+  "Costume & Make-Up",
+  "Visual Effects",
+  "Lighting",
+  "Crew",
+];
+
+// The lead jobs of each department, which open it ahead of the assistants and
+// coordinators TMDB lists alongside them.
+const KEY_JOBS = [
+  "Director",
+  "Screenplay",
+  "Writer",
+  "Story",
+  "Novel",
+  "Original Story",
+  "Characters",
+  "Creator",
+  "Producer",
+  "Executive Producer",
+  "Original Music Composer",
+  "Music",
+  "Director of Photography",
+  "Editor",
+  "Production Design",
+  "Costume Design",
+  "Visual Effects Supervisor",
+  "Casting",
+];
+
+function orderIndex(list: readonly string[], value: string): number {
+  const index = list.indexOf(value);
+  return index === -1 ? list.length : index;
+}
+
 export function groupByDepartment<T extends { department: string }>(items: T[]): CrewGroup<T>[] {
   const byDepartment = new Map<string, T[]>();
   for (const item of items) {
@@ -162,7 +207,27 @@ export function groupByDepartment<T extends { department: string }>(items: T[]):
     list.push(item);
     byDepartment.set(item.department, list);
   }
-  return Array.from(byDepartment, ([department, members]) => ({ department, members }));
+  return Array.from(byDepartment, ([department, members]) => ({ department, members })).sort(
+    (a, b) =>
+      orderIndex(DEPARTMENT_ORDER, a.department) - orderIndex(DEPARTMENT_ORDER, b.department) ||
+      a.department.localeCompare(b.department),
+  );
+}
+
+/** One entry per person: lead jobs first, then by episodes worked. A person
+ * with several jobs in the department keeps one entry that names them all. */
+export function rankCrew(members: CrewRow[]): CrewRow[] {
+  const ranked = [...members].sort(
+    (a, b) =>
+      orderIndex(KEY_JOBS, a.job) - orderIndex(KEY_JOBS, b.job) ||
+      (b.episodeCount ?? 0) - (a.episodeCount ?? 0),
+  );
+  const byPerson = new Map<string, CrewRow>();
+  for (const row of ranked) {
+    const seen = byPerson.get(row.personId);
+    byPerson.set(row.personId, seen ? { ...seen, job: `${seen.job}, ${row.job}` } : row);
+  }
+  return [...byPerson.values()];
 }
 
 /** Keeps the first `limit` members of each department, and every member of
