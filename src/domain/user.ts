@@ -1,4 +1,5 @@
 import { db } from "void/db";
+import type { AuthUser } from "void/auth";
 import { eq } from "drizzle-orm";
 import { userTable } from "@/db/auth-schema";
 import { parseRatingSystem, type RatingSystem } from "./rating";
@@ -20,22 +21,20 @@ export type UserContext = {
   visibility: Visibility;
 };
 
-export async function getUserContext(userId: string): Promise<UserContext> {
-  const rows = await db
-    .select({
-      role: userTable.role,
-      username: userTable.username,
-      visibility: userTable.visibility,
-    })
-    .from(userTable)
-    .where(eq(userTable.id, userId))
-    .limit(1);
-  const row = rows[0];
+// The session lookup loads the whole user row, `auth.ts` additional fields
+// included, so these read the signed-in user without another query.
+// `username` comes from the username plugin, which AuthUser's inferred type
+// leaves out.
+export function userContext(user: AuthUser & { username?: string | null }): UserContext {
   return {
-    role: row?.role === "admin" ? "admin" : "member",
-    username: row?.username ?? null,
-    visibility: toVisibility(row?.visibility ?? null),
+    role: user.role === "admin" ? "admin" : "member",
+    username: user.username ?? null,
+    visibility: toVisibility(user.visibility ?? null),
   };
+}
+
+export function userRatingSystem(user: AuthUser | null): RatingSystem {
+  return user ? parseRatingSystem(user.ratingSystem) : "score100";
 }
 
 export async function getUserSettings(userId: string) {

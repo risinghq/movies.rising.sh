@@ -1,6 +1,6 @@
 import { defineMiddleware, type CloudContext as Context } from "void";
 import { getUser } from "void/auth";
-import { getUserContext, type UserRole } from "@/domain/user";
+import { userContext, type UserRole } from "@/domain/user";
 
 // Pages the username prompt must not block: itself, and the auth screens a
 // signed-in user can still reach.
@@ -17,8 +17,7 @@ function needsUsernamePage(c: Context): boolean {
 }
 
 export default defineMiddleware(async (c, next) => {
-  // Build files that still reach the Worker (CSS, fonts) need no user context;
-  // skipping it keeps a D1 query off each of them.
+  // Build files that still reach the Worker (CSS, fonts) need no user context.
   if (c.req.path.startsWith("/assets/")) {
     await next();
     return;
@@ -41,7 +40,7 @@ export default defineMiddleware(async (c, next) => {
     c.header("Cache-Control", "private, no-cache");
   }
 
-  const ctx = await getUserContext(user.id);
+  const ctx = userContext(user);
   if (!ctx.username && needsUsernamePage(c)) {
     return c.redirect(
       `/welcome?next=${encodeURIComponent(c.req.path + new URL(c.req.url).search)}`,
