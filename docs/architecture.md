@@ -71,6 +71,17 @@ other users receive `member`. The auth client cannot set the role. Anonymous,
 member, and admin are the application roles exposed by `src/domain/user.ts` and
 `middleware/01.auth-role.ts`.
 
+The app sends no email, so a forgotten password goes through the site owner. The
+sign-in page's "forgot password?" form calls Better Auth's
+`requestPasswordReset`. Its `sendResetPassword` hook in `auth.ts` stores the
+reset URL and token in `password_reset_links`, one row per user. The owner reads
+the link (see [Development](development.md#password-reset-links)) and sends it
+to the user. The link lands on `/reset-password`, which calls `resetPassword`
+and revokes the user's sessions. Better Auth owns the token: it lasts 24 hours
+and is single-use, and a link is live only while its `verification` row exists.
+Email delivery was not chosen because sending to arbitrary addresses from this
+Cloudflare account needs Workers Paid.
+
 The database has catalog tables for media, people, credits, genres, companies,
 localized titles, and episodes. User data is in `library_entries`,
 `watch_events`, `favorite_media`, and `favorite_people` in `db/schema.ts`. Watch
