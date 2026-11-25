@@ -3,6 +3,7 @@
 
 import { defineAuth } from "void/auth";
 import { username } from "better-auth/plugins";
+import { APIError } from "better-auth/api";
 import { passkey } from "@better-auth/passkey";
 import { env } from "void/env";
 
@@ -66,7 +67,12 @@ export default defineAuth(({ defaults }) => ({
   databaseHooks: {
     user: {
       create: {
+        // Every account needs a username: profiles resolve through /u/{username}.
+        // The username plugin has already validated and normalized it.
         before: async (user) => {
+          if (typeof user.username !== "string" || user.username.length === 0) {
+            throw new APIError("BAD_REQUEST", { message: "choose a username" });
+          }
           const role = env.ADMIN_EMAIL && user.email === env.ADMIN_EMAIL ? "admin" : "member";
           return { data: { ...user, role } };
         },
