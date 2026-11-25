@@ -1,0 +1,13 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 6d004c877f6773e8f6a330881c22b738a5a37778..882965a7b254de5333fefceea45a4275a04a6a40 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -4903,7 +4903,7 @@ function routingPlugin(root, options) {
+ 			runWorkerFirst: workerBuildRule,
+ 			notFoundHandling: assets.not_found_handling,
+ 			base: resolvedConfig.base,
+-			hasMiddleware: scan.middleware.length > 0,
++			hasMiddleware: false,
+ 			authEnabled: compileOptions.auth !== null,
+ 			liveEnabled: options.live !== void 0,
+ 			alwaysUseHttps: options.routing?.alwaysUseHttps === true,
