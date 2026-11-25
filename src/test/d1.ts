@@ -1,4 +1,6 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { drizzle } from "drizzle-orm/d1";
 import { convertV4MiniflareOptions, Miniflare } from "miniflare";
 import { afterAll } from "vite-plus/test";
@@ -11,21 +13,31 @@ import * as schema from "@schema";
 
 const MIGRATIONS = new URL("../../db/migrations/", import.meta.url);
 
+// Miniflare keeps D1 in a SQLite file, syncs it on every commit and has no
+// in-memory mode. With the temp directory on disk one insert costs about 50 ms,
+// enough to push a seeding test past Vitest's timeout. The database is thrown
+// away, so it lives on tmpfs where the platform has one.
+const storage = mkdtempSync(join(existsSync("/dev/shm") ? "/dev/shm" : tmpdir(), "movies-d1-"));
+
 // Void builds its own Miniflare the same way, from v4-shaped options.
-const miniflare = new Miniflare(
-  convertV4MiniflareOptions({
+const miniflare = new Miniflare({
+  ...convertV4MiniflareOptions({
     modules: true,
     script: "export default {}",
     compatibilityDate: "2026-11-01",
     d1Databases: { DB: "test" },
   }),
-);
+  resourcePersistencePath: storage,
+});
 const d1 = await miniflare.getD1Database("DB");
 await migrate();
 
 export const db = drizzle(d1, { schema });
 
-afterAll(() => miniflare.dispose());
+afterAll(async () => {
+  await miniflare.dispose();
+  rmSync(storage, { recursive: true, force: true });
+});
 
 async function migrate() {
   const files = readdirSync(MIGRATIONS)
