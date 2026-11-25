@@ -10,8 +10,7 @@ const USERNAME_MIN = 3;
 const USERNAME_MAX = 20;
 const USERNAME_PATTERN = /^[a-z0-9_]+$/;
 const RESERVED_USERNAMES = new Set(["admin", "support", "official", "staff", "root"]);
-// The site owner passes reset links on by hand, so a link has to outlive a slow reply.
-const RESET_TOKEN_TTL_SECONDS = 60 * 60 * 24;
+const RESET_TOKEN_TTL_SECONDS = 60 * 60;
 
 // Auth-write username validator. UI validation is advisory; this is the boundary check.
 function isValidUsername(value: string): boolean {
@@ -32,11 +31,10 @@ export default defineAuth(({ defaults }) => ({
     enabled: true,
     resetPasswordTokenExpiresIn: RESET_TOKEN_TTL_SECONDS,
     revokeSessionsOnPasswordReset: true,
-    // The app sends no email. The link is stored for the site owner to pass on.
     // A dynamic import keeps this file loadable by the auth-config codegen.
     sendResetPassword: async ({ user, url, token }) => {
-      const { recordResetLink } = await import("./src/domain/password-reset");
-      await recordResetLink(user.id, token, url);
+      const { deliverResetLink } = await import("./src/domain/password-reset");
+      await deliverResetLink(user, token, url);
     },
   },
   plugins: [
