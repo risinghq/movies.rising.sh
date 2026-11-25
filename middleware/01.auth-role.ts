@@ -1,6 +1,20 @@
-import { defineMiddleware } from "void";
+import { defineMiddleware, type CloudContext as Context } from "void";
 import { getUser } from "void/auth";
 import { getUserContext, type UserRole } from "@/domain/user";
+
+// Pages the username prompt must not block: itself, and the auth screens a
+// signed-in user can still reach.
+const USERNAME_EXEMPT = new Set(["/welcome", "/login", "/reset-password"]);
+
+/** A signed-in user without a username is sent to /welcome from any page
+ * request, document or page data. API calls and assets pass through. */
+function needsUsernamePage(c: Context): boolean {
+  const { method, path } = c.req;
+  if (method !== "GET" || path.startsWith("/api/") || USERNAME_EXEMPT.has(path)) return false;
+  return (
+    c.req.header("x-voidpages") === "true" || c.req.header("accept")?.includes("text/html") === true
+  );
+}
 
 export default defineMiddleware(async (c, next) => {
   const user = getUser();
@@ -21,6 +35,11 @@ export default defineMiddleware(async (c, next) => {
   }
 
   const ctx = await getUserContext(user.id);
+  if (!ctx.username && needsUsernamePage(c)) {
+    return c.redirect(
+      `/welcome?next=${encodeURIComponent(c.req.path + new URL(c.req.url).search)}`,
+    );
+  }
   c.set("role", ctx.role);
   c.set("shared", {
     user: {

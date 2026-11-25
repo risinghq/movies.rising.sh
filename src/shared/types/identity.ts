@@ -44,3 +44,18 @@ export function isValidUsername(username: string): boolean {
     !RESERVED_USERNAMES.has(username)
   );
 }
+
+/** A valid starting handle derived from a name or an email's local part. The
+ * caller still checks availability. */
+export function suggestUsername(seed: string): string {
+  const base = seed
+    .split("@")[0]!
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, USERNAME_RULES.max);
+  const padded = (base || "user").padEnd(USERNAME_RULES.min, "_");
+  return RESERVED_USERNAMES.has(padded) ? `${padded}_1` : padded;
+}

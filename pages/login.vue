@@ -4,11 +4,13 @@ import { auth } from "void/client";
 import { useRouter } from "@void/vue";
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm.vue";
 import PasskeySignIn from "@/components/auth/PasskeySignIn.vue";
+import UsernameField from "@/components/auth/UsernameField.vue";
 
 const router = useRouter();
 const email = ref("");
 const password = ref("");
 const name = ref("");
+const username = ref("");
 const mode = ref<"signin" | "signup" | "forgot">("signin");
 const error = ref("");
 const loading = ref(false);
@@ -31,7 +33,8 @@ function authenticate() {
   return auth.signUp.email({
     email: email.value,
     password: password.value,
-    name: name.value || email.value.split("@")[0],
+    username: username.value.toLowerCase(),
+    name: name.value || username.value,
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
 }
@@ -80,13 +83,15 @@ async function submit() {
 
       <form class="flex flex-col gap-4" @submit.prevent="submit">
         <div class="flex flex-col gap-3">
+          <UsernameField v-if="mode === 'signup'" v-model="username" />
+
           <div v-if="mode === 'signup'" class="flex flex-col gap-1.5">
             <label class="text-xs font-mono text-fg-muted" for="name">name</label>
             <input
               id="name"
               v-model="name"
               type="text"
-              placeholder="your name"
+              placeholder="optional"
               class="bg-bg-elevated border border-border rounded-lg px-3 py-2.5 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent/50 transition-colors font-mono"
             />
           </div>
