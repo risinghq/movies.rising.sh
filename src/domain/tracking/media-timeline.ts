@@ -1,4 +1,4 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "void/db";
 import { libraryEntries, watchEvents } from "@schema";
 
@@ -23,11 +23,12 @@ export async function getTimelineView(mediaId: string, days = 90): Promise<Media
   const [daily, totals, tracked] = await Promise.all([
     db
       .select({
-        date: watchEvents.watchedOn,
+        // Undated plays have no day to chart; the totals below still count them.
+        date: sql<string>`${watchEvents.watchedOn}`,
         watches: sql<number>`count(*)`,
       })
       .from(watchEvents)
-      .where(eq(watchEvents.mediaId, mediaId))
+      .where(and(eq(watchEvents.mediaId, mediaId), isNotNull(watchEvents.watchedOn)))
       .groupBy(watchEvents.watchedOn)
       .orderBy(desc(watchEvents.watchedOn))
       .limit(limit),

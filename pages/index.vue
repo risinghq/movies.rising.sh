@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import type { Props } from "./index.server";
 import { useRouter } from "@void/vue";
+import ImportInvite from "@/components/import/ImportInvite.vue";
 import MediaCard from "@/components/media/MediaCard.vue";
 import MediaCollection from "@/components/media/MediaCollection.vue";
 import ContinueCard from "@/components/media/ContinueCard.vue";
@@ -47,16 +48,10 @@ function goHomeSearch() {
       </MediaCollection>
     </section>
 
-    <section
+    <ImportInvite
       v-if="props.entries.length === 0"
-      class="flex flex-col items-center gap-3 py-12 text-center motion-safe:animate-slide-up animate-fill-both"
-    >
-      <span class="i-lucide:clapperboard w-12 h-12 text-fg-subtle" aria-hidden="true" />
-      <p class="font-mono text-fg-muted">nothing tracked yet</p>
-      <p class="text-sm text-fg-subtle">
-        press <kbd class="font-mono">⌘K</kbd> to search a title and log your first watch
-      </p>
-    </section>
+      class="motion-safe:animate-slide-up animate-fill-both"
+    />
 
     <LibraryBrowser
       v-else

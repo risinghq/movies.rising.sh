@@ -78,6 +78,11 @@ events are an immutable log. Displayed library status and recency are derived
 from that log and the user-filed status. Movies use a null episode identity;
 shows use season and episode identity.
 
+An undated play has null `watchedAt`, `watchedOn`, and `utcOffsetMinutes`. It
+comes from an import whose source recorded a bulk "mark as watched" rather than
+a real viewing. Views keyed by date (diary, heatmap, year pages) skip undated
+plays; totals and progress count them.
+
 Seed data uses committed local fixtures and never needs network access.
 
 ## TMDB boundary
@@ -154,11 +159,84 @@ per statement, and 2 MB per row. The 30-second limit applies to a whole
 to `.values({})`; omitted keys become literals, while a passed `null` is still
 bound. `db.batch()` is one atomic transaction.
 
+## Imports
+
+An import moves another tracker's data into one user's library. It runs in four
+stages:
+
+1. A reader under `src/domain/import/` (`trakt.ts`, `tmdb.ts`) turns a source's
+   export into `ImportItem`s: plays, ratings, planned titles, favorites, and
+   dropped titles. It reports what it cannot map, such as episode ratings, as
+   skipped.
+2. `stageImport` in [`src/services/import.ts`](../src/services/import.ts) stores
+   the items and a summary in an `imports` row in state `scanned`. The summary
+   lists batch days: days with so many plays that they were bulk marks, not
+   viewings (`batches.ts`).
+3. `startImport` applies the user's Review choice. Plays on the batch days the
+   user picked become undated plays. The row moves to `importing` and one
+   message goes to `queues/imports.ts`.
+4. `runImport` runs in the consumer. It stubs titles the catalog lacks, plans
+   the writes against the user's current library (`plan.ts`), writes in
+   `runBatch` groups, enqueues hydration for the new stubs, and moves the row to
+   `done`.
+
+The states are `scanned`, `importing`, `done`, `failed`, and `undone`.
+`moveImport` changes state only from the expected one, so two requests cannot
+start or undo the same import.
+
+The plan never overwrites the user's own data. A play already logged at the same
+instant is a duplicate. A score or status the user set stays; the import fills
+only empty fields and raises a planned entry to the imported status. `runImport`
+is safe to retry: a second run plans against the rows the first one wrote and
+adds only what is missing. The report keeps the first run's counts.
+
+Rows the import creates carry its `importId`. Undo deletes those plays and
+favorites, and deletes the import's entries unless the user has since logged a
+play for the title. Values the import filled into an existing entry stay. A
+`failed` import can be undone too, because the consumer may have written some
+batches before its last attempt failed.
+
+The `/import` page (`pages/import/`) shows the state of the import named by
+`?id=`: Review for `scanned`, a polling progress view for `importing`, the
+report and Undo for `done`, and Undo for `failed`. Without `?id=` it shows the
+sources and past imports. `src/composables/useImportApi.ts` calls the routes and
+keeps a source's pending handshake in `sessionStorage` across the source's
+approval page.
+
+The stored items are capped at 1.9 MB, under the D1 2 MB value limit; that is
+about 15,000 plays.
+
+TMDB connects through its v4 user approval
+([`src/services/import-tmdb.ts`](../src/services/import-tmdb.ts)). The connect
+route returns TMDB's approval URL and a request token; the client keeps the
+token across the approval page and posts it to the scan route. The token grants
+nothing without the server's read token. The scan exchanges it for a user access
+token, reads the account's rated, watchlist and favorite lists, revokes the
+access token, and stages the result. No user token is stored. TMDB keeps no
+watch history, so a TMDB import holds ratings and lists only. The scan runs in
+one request and reads at most `MAX_PAGES` (500) list pages, well under the paid
+Workers plan's 10,000 subrequests per request; a list it cut short is reported
+as skipped.
+
+Trakt connects through OAuth with PKCE
+([`src/services/import-trakt.ts`](../src/services/import-trakt.ts)). The Trakt
+app is public: it has a client ID (`TRAKT_CLIENT_ID`) and no secret. The connect
+route returns Trakt's authorize URL, a state, and a code verifier; the client
+keeps the state and verifier across Trakt's page and checks the state when Trakt
+returns to `/import/trakt/callback`. The scan route takes the code and verifier,
+exchanges them for an access token, reads history, ratings, watchlist, favorites
+and dropped shows, revokes the token, and stages the result. No user token is
+stored. The scan reads at most `MAX_PAGES` (200) pages of 250 rows; a list it
+cut short is reported as skipped. The redirect URI must be registered on the
+Trakt app, so a new origin needs a new entry there.
+
 ## Queues, crons, and views
 
 Queues are `defineQueue<T>` modules under `queues/`. Void's `maxRetries` default
 is 3, so a consumer that retries to another number exports that number as
 `maxRetries`; this consumer exports 5 in `queues/media-hydration.ts`.
+`queues/imports.ts` exports 3 because Void requires a literal; after the last
+attempt it marks the import failed.
 
 Crons are `defineScheduled` modules under `crons/` with an exported `cron`
 expression. Local development does not auto-fire them. Trigger the scheduled

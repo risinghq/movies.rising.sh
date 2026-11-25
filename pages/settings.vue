@@ -5,6 +5,7 @@ import ProfileSection from "@/components/settings/ProfileSection.vue";
 import PreferencesSection from "@/components/settings/PreferencesSection.vue";
 import SettingsSection from "@/components/settings/SettingsSection.vue";
 import { useColorTheme } from "@/composables/useColorTheme";
+import { Link } from "@void/vue";
 
 const props = defineProps<Props>();
 const { theme, toggle } = useColorTheme();
@@ -35,6 +36,19 @@ const { theme, toggle } = useColorTheme();
       :rating-system="props.profile.ratingSystem"
       :time-zone="props.profile.timeZone"
     />
+
+    <SettingsSection title="import">
+      <Link
+        href="/import"
+        class="flex items-center justify-between px-4 py-3 hover:bg-bg-muted transition-colors"
+      >
+        <div>
+          <span class="text-sm font-mono text-fg-muted">bring your history</span>
+          <p class="text-xs text-fg-subtle mt-0.5">from Trakt or TMDB, and undo past imports</p>
+        </div>
+        <span class="i-lucide:chevron-right w-4 h-4 text-fg-subtle" aria-hidden="true" />
+      </Link>
+    </SettingsSection>
 
     <SettingsSection title="appearance">
       <div class="flex items-center justify-between px-4 py-3">

@@ -39,6 +39,7 @@ export function buildEntry(
     filedStatus: patch.filedStatus ?? prev?.filedStatus ?? "planned",
     score100: patch.score100 !== undefined ? patch.score100 : (prev?.score100 ?? null),
     notes: patch.notes !== undefined ? patch.notes : (prev?.notes ?? null),
+    importId: prev?.importId ?? null,
     createdAt: prev?.createdAt ?? now,
     updatedAt: now,
   };
@@ -96,7 +97,8 @@ export async function upsertEntry(
   return ok(row);
 }
 
-type WatchSummary = { lastWatchedAt: number };
+// lastWatchedAt is null when every play of the title is undated.
+type WatchSummary = { lastWatchedAt: number | null };
 
 async function watchSummaries(
   userId: string,
@@ -106,7 +108,7 @@ async function watchSummaries(
     db
       .select({
         mediaId: watchEvents.mediaId,
-        lastWatchedAt: sql<number>`max(${watchEvents.watchedAt})`,
+        lastWatchedAt: sql<number | null>`max(${watchEvents.watchedAt})`,
       })
       .from(watchEvents)
       .where(and(eq(watchEvents.userId, userId), inArray(watchEvents.mediaId, batch)))

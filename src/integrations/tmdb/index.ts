@@ -3,3 +3,10 @@ export { searchTmdbMedia, fetchTmdbShowTotals, type TmdbMediaResult } from "./se
 export { fetchMovieDetail, fetchShowDetail } from "./media-detail";
 export { fetchPersonDetail } from "./person";
 export { fetchSeasonEpisodes } from "./season";
+export {
+  TMDB_APPROVE_URL,
+  createTmdbAccessToken,
+  createTmdbRequestToken,
+  fetchTmdbAccountLists,
+  revokeTmdbAccessToken,
+} from "./account";
