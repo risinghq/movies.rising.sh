@@ -1,22 +1,18 @@
 import { ref, watch, onMounted } from "vue";
-
-type Theme = "dark" | "light";
-const STORAGE_KEY = "track-theme";
+import { THEME_STORAGE_KEY, type Theme } from "@/shared/theme";
 
 const theme = ref<Theme>("dark");
 
+/** The head script in void.config.ts applies the stored theme on load; this
+ * reads it back and persists changes. */
 export function useColorTheme() {
   onMounted(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-    if (stored === "light" || stored === "dark") {
-      theme.value = stored;
-    }
-    document.documentElement.setAttribute("data-theme", theme.value);
+    theme.value = document.documentElement.dataset.theme === "light" ? "light" : "dark";
   });
 
   watch(theme, (t) => {
-    document.documentElement.setAttribute("data-theme", t);
-    localStorage.setItem(STORAGE_KEY, t);
+    document.documentElement.dataset.theme = t;
+    localStorage.setItem(THEME_STORAGE_KEY, t);
   });
 
   return {

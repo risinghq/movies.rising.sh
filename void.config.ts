@@ -1,5 +1,6 @@
 import { defineConfig } from "void/config";
 import { SITE_DESCRIPTION, SITE_NAME } from "./src/shared/head";
+import { THEME_BOOT_SCRIPT } from "./src/shared/theme";
 
 export default defineConfig({
   // Pages build full titles with pageHead(), so there is no titleTemplate; the
@@ -27,6 +28,7 @@ export default defineConfig({
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
+    script: [{ innerHTML: THEME_BOOT_SCRIPT }],
   },
   auth: {
     providers: ["email"],
