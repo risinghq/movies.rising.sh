@@ -4,11 +4,13 @@ import {
   findPersonBySlug,
   markPersonDetailsFailedWrite,
   personScalarsWrite,
+  personStubsWrite,
   type PersonRecord,
 } from "@/domain/catalog/people";
 import { runBatch } from "@/db/kernel";
 import { DETAILS_TTL_MS, hydrationState, summarizeCause } from "@/domain/hydration";
 import { attempt } from "@/result";
+import { slugify } from "@/shared/slug";
 import type { FilmographyEntry, PersonCrewEntry } from "@/shared/types/metadata";
 
 export type PersonView = {
@@ -16,6 +18,24 @@ export type PersonView = {
   acting: FilmographyEntry[];
   crew: PersonCrewEntry[];
 };
+
+/** A stored person, or one TMDB knows by the id that ends the slug. Search
+ * links to people no credit has stored yet; the TMDB fetch is edge-cached, so
+ * ensurePersonDetails reads it again for free. */
+export async function loadPerson(slug: string): Promise<PersonRecord | null> {
+  const stored = await findPersonBySlug(slug);
+  if (stored) return stored;
+
+  const tmdbId = Number(slug.slice(slug.lastIndexOf("-") + 1));
+  if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0 || !tmdbToken()) return null;
+  const fetched = await attempt(fetchPersonDetail(tmdbId), (cause) => cause);
+  if (!fetched.ok) return null;
+
+  const { scalars } = fetched.value;
+  if (slugify(scalars.name, tmdbId) !== slug) return null;
+  await runBatch(personStubsWrite([{ tmdbId, ...scalars }]));
+  return findPersonBySlug(slug);
+}
 
 export async function ensurePersonDetails(person: PersonRecord): Promise<PersonView> {
   if (!tmdbToken()) return { person, acting: [], crew: [] };

@@ -156,7 +156,9 @@ Person pages are the exception. `src/services/person-hydration.ts` calls TMDB on
 every view because filmography is not persisted. It persists only bio scalars. A
 TMDB failure is recorded durably, logging instead of throwing if that recording
 fails. A failed bio write is logged. The loader receives a `PersonView` with an
-empty filmography on failure rather than an outcome.
+empty filmography on failure rather than an outcome. Search links to people that
+no credit has stored yet: `loadPerson` stores a person from TMDB when the id
+that ends the slug names someone whose own slug matches.
 
 ## Persistence kernel
 
@@ -282,7 +284,10 @@ nothing about the owner's choice.
 
 The search page loader renders results on the server for `/search?q=...`. The
 client then re-runs the search as the query changes through
-[`useMediaSearch`](../src/composables/useMediaSearch.ts).
+[`useMediaSearch`](../src/composables/useMediaSearch.ts). One TMDB
+`/search/multi` call returns titles and people; the page previews four people
+above the titles and the palette lists three between catalog hits and TMDB
+titles.
 
 [`useUrlState`](../src/composables/useUrlState.ts) seeds string refs from the
 query string on mount and mirrors later changes back with

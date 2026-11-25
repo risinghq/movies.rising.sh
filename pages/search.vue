@@ -2,13 +2,11 @@
 import { computed, onMounted, ref, watch } from "vue";
 import type { Props } from "./search.server";
 import { useMediaSearch, type LocalResult, type RemoteResult } from "@/composables/useMediaSearch";
-import SearchResultCard from "@/components/media/SearchResultCard.vue";
-import MediaResultRow from "@/components/media/MediaResultRow.vue";
-import MediaCollection from "@/components/media/MediaCollection.vue";
+import SearchTitles, { type SearchItem } from "@/components/media/SearchTitles.vue";
+import SearchPeople from "@/components/SearchPeople.vue";
 import LayoutToggle from "@/components/ui/LayoutToggle.vue";
 import { useLayoutPreference } from "@/composables/useLayoutPreference";
 import { useUrlState } from "@/composables/useUrlState";
-import type { MediaRef } from "@/shared/tracking";
 
 const props = defineProps<Props>();
 
@@ -16,6 +14,7 @@ const search = useMediaSearch({ limit: 40 });
 search.query.value = props.query;
 search.local.value = props.results.local;
 search.remote.value = props.results.remote;
+search.people.value = props.results.people;
 search.remoteEnabled.value = props.results.remoteEnabled;
 if (props.query) search.hasSearched.value = true;
 
@@ -36,21 +35,22 @@ const typeOptions = [
   { value: "all", label: "all" },
   { value: "movie", label: "movies" },
   { value: "show", label: "shows" },
+  { value: "person", label: "people" },
 ] as const;
 
-type Item = {
-  key: string;
-  title: string;
-  mediaType: "movie" | "show";
-  posterPath: string | null;
-  releaseDate: string | null;
-  voteAverage: number | null;
-  slug: string | null;
-  media: MediaRef;
-  tracked: boolean;
-};
+// "all" previews the top people above the titles; "people" lists every one.
+const PEOPLE_PREVIEW = 4;
+const peopleOnly = computed(() => typeFilter.value === "person");
+const people = computed(() => {
+  if (peopleOnly.value) return search.people.value;
+  if (typeFilter.value !== "all") return [];
+  return search.people.value.slice(0, PEOPLE_PREVIEW);
+});
+const peopleTotal = computed(() =>
+  typeFilter.value === "all" ? search.people.value.length : undefined,
+);
 
-function fromLocal(r: LocalResult): Item {
+function fromLocal(r: LocalResult): SearchItem {
   return {
     key: `l:${r.id}`,
     title: r.title,
@@ -64,7 +64,7 @@ function fromLocal(r: LocalResult): Item {
   };
 }
 
-function fromRemote(r: RemoteResult): Item {
+function fromRemote(r: RemoteResult): SearchItem {
   return {
     key: `r:${r.mediaType}:${r.tmdbId}`,
     title: r.title,
@@ -78,7 +78,8 @@ function fromRemote(r: RemoteResult): Item {
   };
 }
 
-const items = computed<Item[]>(() => {
+const items = computed<SearchItem[]>(() => {
+  if (peopleOnly.value) return [];
   const locals = search.local.value.map(fromLocal);
   const localIds = new Set(
     locals.map((i) => (typeof i.media === "string" ? i.media : "")).filter(Boolean),
@@ -102,7 +103,12 @@ const items = computed<Item[]>(() => {
 });
 
 const trimmed = computed(() => queryInput.value.trim());
-const hasResults = computed(() => items.value.length > 0);
+const resultCount = computed(
+  () =>
+    items.value.length +
+    (peopleOnly.value || typeFilter.value === "all" ? search.people.value.length : 0),
+);
+const hasResults = computed(() => items.value.length > 0 || people.value.length > 0);
 
 let debounce: ReturnType<typeof setTimeout> | undefined;
 watch(queryInput, (q) => {
@@ -124,7 +130,7 @@ onMounted(() => {
   <main class="container flex flex-col gap-8 py-8 sm:py-12">
     <div class="flex flex-col gap-1">
       <h1 class="text-3xl font-mono font-bold">search</h1>
-      <p class="text-fg-muted text-sm">find a movie or show, then track it inline.</p>
+      <p class="text-fg-muted text-sm">find a movie, show or person. track titles inline.</p>
     </div>
 
     <div
@@ -135,9 +141,9 @@ onMounted(() => {
         ref="inputRef"
         v-model="queryInput"
         type="text"
-        placeholder="search titles..."
+        placeholder="search titles and people..."
         class="w-full bg-transparent text-fg placeholder:text-fg-subtle text-base outline-none font-mono"
-        aria-label="search titles"
+        aria-label="search titles and people"
       />
       <span
         v-if="search.loading.value"
@@ -150,7 +156,7 @@ onMounted(() => {
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 class="text-sm font-mono text-fg-muted" aria-live="polite">
           results
-          <span class="text-fg-subtle ml-1">({{ items.length }})</span>
+          <span class="text-fg-subtle ml-1">({{ resultCount }})</span>
         </h2>
 
         <div class="flex flex-wrap items-center gap-2">
@@ -172,6 +178,7 @@ onMounted(() => {
           </div>
 
           <div
+            v-if="!peopleOnly"
             class="flex rounded-lg border border-border overflow-hidden"
             role="group"
             aria-label="sort by"
@@ -192,7 +199,7 @@ onMounted(() => {
             </button>
           </div>
 
-          <LayoutToggle v-model="layout" />
+          <LayoutToggle v-if="!peopleOnly" v-model="layout" />
         </div>
       </div>
 
@@ -209,38 +216,22 @@ onMounted(() => {
 
       <div v-else-if="!hasResults" class="flex flex-col items-center gap-3 py-14 text-center">
         <span class="i-lucide:search-x w-10 h-10 text-fg-subtle" aria-hidden="true" />
-        <p class="font-mono text-fg-muted text-sm">no titles match "{{ trimmed }}"</p>
+        <p class="font-mono text-fg-muted text-sm">nothing matches "{{ trimmed }}"</p>
       </div>
 
-      <MediaCollection v-else :layout="layout">
-        <template v-if="layout === 'grid'">
-          <SearchResultCard
-            v-for="item in items"
-            :key="item.key"
-            :title="item.title"
-            :media-type="item.mediaType"
-            :poster-path="item.posterPath"
-            :release-date="item.releaseDate"
-            :vote-average="item.voteAverage"
-            :slug="item.slug"
-            :media="item.media"
-            :tracked="item.tracked"
-          />
-        </template>
-        <template v-else>
-          <MediaResultRow
-            v-for="item in items"
-            :key="item.key"
-            :title="item.title"
-            :media-type="item.mediaType"
-            :poster-path="item.posterPath"
-            :release-date="item.releaseDate"
-            :slug="item.slug"
-            :media="item.media"
-            :tracked="item.tracked"
-          />
-        </template>
-      </MediaCollection>
+      <SearchPeople
+        v-if="people.length"
+        :people="people"
+        :total="peopleTotal"
+        @show-all="typeFilter = 'person'"
+      />
+
+      <SearchTitles
+        v-if="items.length"
+        :items="items"
+        :layout="layout"
+        :heading="people.length > 0"
+      />
     </template>
 
     <div v-else class="flex flex-col items-center gap-3 py-16 text-center">

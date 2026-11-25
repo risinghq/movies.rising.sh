@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import Modal from "@/components/ui/Modal.vue";
-import MediaResultRow from "@/components/media/MediaResultRow.vue";
+import PaletteResults from "@/components/PaletteResults.vue";
 import { auth } from "void/client";
 import { Link, useRouter } from "@void/vue";
 import { useMediaSearch } from "@/composables/useMediaSearch";
@@ -69,27 +69,32 @@ const filteredCommands = computed(() => {
   return commands.value.filter((c) => c.label.toLowerCase().includes(q));
 });
 
-const hasResults = computed(() => search.local.value.length > 0 || search.remote.value.length > 0);
+// People sit between catalog hits and TMDB titles: a name query has no catalog
+// hit, so its people lead; a title query keeps its titles first.
+const PEOPLE_SHOWN = 3;
+const people = computed(() => search.people.value.slice(0, PEOPLE_SHOWN));
 
-type Nav =
-  | { kind: "command"; cmd: Command }
-  | { kind: "media"; slug: string | null }
-  | { kind: "seeall"; href: string };
+const hasResults = computed(
+  () => search.local.value.length > 0 || people.value.length > 0 || search.remote.value.length > 0,
+);
+
+type Nav = { kind: "command"; cmd: Command } | { kind: "link"; href: string | null };
+
+const mediaHref = (slug: string | null | undefined) => (slug ? `/media/${slug}` : null);
 
 const navItems = computed<Nav[]>(() => {
   if (showCommands.value) {
     return filteredCommands.value.map((cmd) => ({ kind: "command", cmd }) as Nav);
   }
   const items: Nav[] = [];
-  for (const r of search.local.value) items.push({ kind: "media", slug: r.slug ?? null });
-  for (const r of search.remote.value) items.push({ kind: "media", slug: r.slug ?? null });
+  for (const r of search.local.value) items.push({ kind: "link", href: mediaHref(r.slug) });
+  for (const p of people.value) items.push({ kind: "link", href: `/person/${p.slug}` });
+  for (const r of search.remote.value) items.push({ kind: "link", href: mediaHref(r.slug) });
   if (query.value.trim()) {
-    items.push({ kind: "seeall", href: `/search?q=${encodeURIComponent(query.value.trim())}` });
+    items.push({ kind: "link", href: `/search?q=${encodeURIComponent(query.value.trim())}` });
   }
   return items;
 });
-
-const localCount = computed(() => search.local.value.length);
 
 watch(navItems, () => {
   activeIndex.value = 0;
@@ -117,11 +122,7 @@ function activate(item: Nav) {
     else void runCommand(item.cmd);
     return;
   }
-  if (item.kind === "media") {
-    if (item.slug) go(`/media/${item.slug}`);
-    return;
-  }
-  go(item.href);
+  if (item.href) go(item.href);
 }
 
 let debounce: ReturnType<typeof setTimeout> | undefined;
@@ -225,7 +226,7 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
           ref="inputRef"
           v-model="query"
           type="text"
-          placeholder="search titles, or / for commands..."
+          placeholder="search titles and people, or / for commands..."
           class="w-full bg-transparent text-fg placeholder:text-fg-subtle text-base outline-none font-mono lowercase"
           aria-label="command palette"
           role="combobox"
@@ -301,36 +302,17 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
             v-else-if="!hasResults"
             class="px-3 py-6 text-center text-fg-muted text-sm font-mono"
           >
-            no titles found
+            nothing found
           </div>
-          <div v-else class="flex flex-col gap-0.5">
-            <MediaResultRow
-              v-for="(item, index) in search.local.value"
-              :key="`local:${item.id}`"
-              :title="item.title"
-              :media-type="item.mediaType"
-              :poster-path="item.posterPath"
-              :release-date="item.releaseDate"
-              :slug="item.slug"
-              :media="item.id"
-              :tracked="item.inLibrary"
-              :active="activeIndex === index"
-              @mouseenter="activeIndex = index"
-            />
-            <MediaResultRow
-              v-for="(item, index) in search.remote.value"
-              :key="`remote:${item.mediaType}:${item.tmdbId}`"
-              :title="item.title"
-              :media-type="item.mediaType"
-              :poster-path="item.posterPath"
-              :release-date="item.releaseDate"
-              :slug="item.slug"
-              :media="item"
-              :tracked="item.inLibrary"
-              :active="activeIndex === localCount + index"
-              @mouseenter="activeIndex = localCount + index"
-            />
-          </div>
+          <PaletteResults
+            v-else
+            :local="search.local.value"
+            :people="people"
+            :remote="search.remote.value"
+            :active-index="activeIndex"
+            @hover="activeIndex = $event"
+            @pick="close"
+          />
 
           <Link
             v-if="query.trim()"

@@ -52,7 +52,7 @@ defineExpose({
           v-model="query"
           type="search"
           name="q"
-          placeholder="search movies and shows"
+          placeholder="search movies, shows and people"
           class="w-full min-w-25 ps-9 pe-18 max-sm:text-base"
           aria-keyshortcuts="/"
           @focus="emit('focus')"

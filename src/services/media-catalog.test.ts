@@ -59,6 +59,13 @@ describe("searchCatalog", () => {
         { id: 7, title: "Dune", media_type: "movie" },
         { id: 8, title: "Dune Two", media_type: "movie" },
         { id: 9, name: "Dune Show", media_type: "tv" },
+        {
+          id: 10,
+          name: "Denis Villeneuve",
+          media_type: "person",
+          known_for_department: "Directing",
+          known_for: [{ title: "Dune" }, { name: "Dune Show" }, { title: "Arrival" }],
+        },
       ],
     };
     await addUser({ id: "u1" });
@@ -75,6 +82,16 @@ describe("searchCatalog", () => {
       ["Dune", true, true],
       ["Dune Two", true, false],
       ["Dune Show", false, false],
+    ]);
+    expect(signedIn.people).toEqual([
+      {
+        tmdbId: 10,
+        name: "Denis Villeneuve",
+        profilePath: null,
+        knownForDepartment: "Directing",
+        knownFor: ["Dune", "Dune Show"],
+        slug: "denis-villeneuve-10",
+      },
     ]);
 
     const anonymous = await searchCatalog({ query: "dune", userId: null });
