@@ -2,6 +2,7 @@ import { index, integer, real, sqliteTable, text, uniqueIndex } from "void/schem
 import type { MediaType } from "@/domain/catalog/media";
 import type { MediaStatus } from "@/shared/media-status";
 import type { LibraryStatus } from "@/shared/library-status";
+import type { ImportSource, ImportState } from "@/shared/import";
 
 export const media = sqliteTable(
   "media",
@@ -216,15 +217,19 @@ export const watchEvents = sqliteTable(
     episodeNumber: integer("episode_number"),
     // UTC watch instant, distinct from createdAt (log time). `watchedOn` and
     // `utcOffsetMinutes` are stamped at write time for stable local day/hour.
-    watchedAt: integer("watched_at").notNull(),
-    watchedOn: text("watched_on").notNull(),
-    utcOffsetMinutes: integer("utc_offset_minutes").notNull(),
+    // All three are null together for a play whose date is unknown, such as a
+    // backfill marked in bulk on another tracker. Dated views skip those plays.
+    watchedAt: integer("watched_at"),
+    watchedOn: text("watched_on"),
+    utcOffsetMinutes: integer("utc_offset_minutes"),
+    importId: text("import_id"),
     createdAt: integer("created_at").notNull(),
   },
   (t) => [
     index("idx_watch_user_watched_at").on(t.userId, t.watchedAt),
     index("idx_watch_user_watched_on").on(t.userId, t.watchedOn),
     index("idx_watch_user_media_episode").on(t.userId, t.mediaId, t.seasonNumber, t.episodeNumber),
+    index("idx_watch_import").on(t.importId),
   ],
 );
 
@@ -240,12 +245,14 @@ export const libraryEntries = sqliteTable(
     filedStatus: text("filed_status").$type<LibraryStatus>().notNull(),
     score100: integer("score100"),
     notes: text("notes"),
+    importId: text("import_id"),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
   (t) => [
     uniqueIndex("uq_library_user_media").on(t.userId, t.mediaId),
     index("idx_library_user_updated").on(t.userId, t.updatedAt),
+    index("idx_library_import").on(t.importId),
   ],
 );
 
@@ -257,11 +264,13 @@ export const favoriteMedia = sqliteTable(
     mediaId: text("media_id")
       .notNull()
       .references(() => media.id, { onDelete: "cascade" }),
+    importId: text("import_id"),
     createdAt: integer("created_at").notNull(),
   },
   (t) => [
     uniqueIndex("uq_favorite_media_user_media").on(t.userId, t.mediaId),
     index("idx_favorite_media_user").on(t.userId),
+    index("idx_favorite_media_import").on(t.importId),
   ],
 );
 
@@ -279,4 +288,25 @@ export const favoritePeople = sqliteTable(
     uniqueIndex("uq_favorite_people_user_person").on(t.userId, t.personId),
     index("idx_favorite_people_user").on(t.userId),
   ],
+);
+
+// One import of a user's history from another tracker. Rows it created in
+// watch_events, library_entries and favorite_media carry its id, so undo
+// deletes exactly those. `items` holds the staged import items as JSON between
+// scan and import. `summary` and `report` are JSON for the import page.
+export const imports = sqliteTable(
+  "imports",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    source: text("source").$type<ImportSource>().notNull(),
+    state: text("state").$type<ImportState>().notNull(),
+    items: text("items"),
+    summary: text("summary"),
+    report: text("report"),
+    error: text("error"),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [index("idx_imports_user_created").on(t.userId, t.createdAt)],
 );

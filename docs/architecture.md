@@ -78,6 +78,11 @@ events are an immutable log. Displayed library status and recency are derived
 from that log and the user-filed status. Movies use a null episode identity;
 shows use season and episode identity.
 
+An undated play has null `watchedAt`, `watchedOn`, and `utcOffsetMinutes`. It
+comes from an import whose source recorded a bulk "mark as watched" rather than
+a real viewing. Views keyed by date (diary, heatmap, year pages) skip undated
+plays; totals and progress count them.
+
 Seed data uses committed local fixtures and never needs network access.
 
 ## TMDB boundary
@@ -154,11 +159,50 @@ per statement, and 2 MB per row. The 30-second limit applies to a whole
 to `.values({})`; omitted keys become literals, while a passed `null` is still
 bound. `db.batch()` is one atomic transaction.
 
+## Imports
+
+An import moves another tracker's data into one user's library. It runs in four
+stages:
+
+1. A reader under `src/domain/import/` (`trakt.ts`) turns a source's export into
+   `ImportItem`s: plays, ratings, planned titles, favorites, and dropped titles.
+   It reports what it cannot map, such as episode ratings, as skipped.
+2. `stageImport` in [`src/services/import.ts`](../src/services/import.ts) stores
+   the items and a summary in an `imports` row in state `scanned`. The summary
+   lists batch days: days with so many plays that they were bulk marks, not
+   viewings (`batches.ts`).
+3. `startImport` applies the user's Review choice. Plays on the batch days the
+   user picked become undated plays. The row moves to `importing` and one
+   message goes to `queues/imports.ts`.
+4. `runImport` runs in the consumer. It stubs titles the catalog lacks, plans
+   the writes against the user's current library (`plan.ts`), writes in
+   `runBatch` groups, enqueues hydration for the new stubs, and moves the row to
+   `done`.
+
+The states are `scanned`, `importing`, `done`, `failed`, and `undone`.
+`moveImport` changes state only from the expected one, so two requests cannot
+start or undo the same import.
+
+The plan never overwrites the user's own data. A play already logged at the same
+instant is a duplicate. A score or status the user set stays; the import fills
+only empty fields and raises a planned entry to the imported status. `runImport`
+is safe to retry: a second run plans against the rows the first one wrote and
+adds only what is missing. The report keeps the first run's counts.
+
+Rows the import creates carry its `importId`. Undo deletes those plays and
+favorites, and deletes the import's entries unless the user has since logged a
+play for the title. Values the import filled into an existing entry stay.
+
+The stored items are capped at 1.9 MB, under the D1 2 MB value limit; that is
+about 15,000 plays.
+
 ## Queues, crons, and views
 
 Queues are `defineQueue<T>` modules under `queues/`. Void's `maxRetries` default
 is 3, so a consumer that retries to another number exports that number as
 `maxRetries`; this consumer exports 5 in `queues/media-hydration.ts`.
+`queues/imports.ts` exports 3 because Void requires a literal; after the last
+attempt it marks the import failed.
 
 Crons are `defineScheduled` modules under `crons/` with an exported `cron`
 expression. Local development does not auto-fire them. Trigger the scheduled

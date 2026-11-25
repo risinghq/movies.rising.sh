@@ -30,6 +30,7 @@ import {
   summarizeCause,
 } from "@/domain/hydration";
 import { attempt } from "@/result";
+import { chunk } from "@/shared/chunk";
 import type {
   EpisodeHydrationMessage,
   EpisodeInput,
@@ -152,6 +153,22 @@ export async function runHydrationMessage(message: HydrationMessage): Promise<Hy
   const found = await findMedia(message.mediaId);
   if (!found.ok) return { ok: true, skipped: true }; // media gone; nothing to refresh
   return hydrateMediaDetails(found.value);
+}
+
+// A queue batch holds at most 100 messages.
+const SEND_BATCH = 100;
+
+export async function enqueueMediaDetails(mediaIds: readonly string[]): Promise<void> {
+  for (const part of chunk([...mediaIds], SEND_BATCH)) {
+    try {
+      await queues["media-hydration"].sendBatch(
+        part.map((mediaId) => ({ body: { kind: "media-details", mediaId } as const })),
+      );
+    } catch (cause) {
+      // The reconcile cron picks up any stub left unhydrated.
+      logger.warn("failed to enqueue hydration batch", { count: part.length, cause });
+    }
+  }
 }
 
 async function enqueue(message: HydrationMessage): Promise<void> {

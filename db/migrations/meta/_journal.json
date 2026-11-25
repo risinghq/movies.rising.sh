@@ -15,6 +15,20 @@
       "when": 1795557915822,
       "tag": "20261124220515_bright_spot",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1795564867681,
+      "tag": "20261125000107_lean_purple_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1795564873601,
+      "tag": "20261125000113_dark_squirrel_girl",
+      "breakpoints": true
     }
   ]
 }

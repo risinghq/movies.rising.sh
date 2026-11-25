@@ -1,7 +1,8 @@
 import { and, desc, eq, inArray, isNull, like, lt, or } from "drizzle-orm";
 import { db } from "void/db";
 import { media } from "@schema";
-import { selectByIds, type Statement } from "@/db/kernel";
+import { insertChunks, selectByIds, type Statement } from "@/db/kernel";
+import { slugify } from "@/shared/slug";
 import type { MediaDetailScalars } from "@/shared/types/metadata";
 import { attempt, err, ok, type Result } from "@/result";
 import type { TrackingError } from "@/domain/errors";
@@ -27,7 +28,7 @@ export type UpsertMediaInput = {
   popularity?: number | null;
 };
 
-function toMediaId(mediaType: MediaType, tmdbId: number) {
+export function toMediaId(mediaType: MediaType, tmdbId: number) {
   return `tmdb:${mediaType}:${tmdbId}`;
 }
 
@@ -158,6 +159,24 @@ export async function upsertMediaFromTmdb(input: UpsertMediaInput) {
     });
 
   return id;
+}
+
+// Inserts a bare stub for each title the catalog lacks. A title already in the
+// catalog keeps its data. Hydration fills the stubs in later.
+export function mediaStubsWrite(
+  refs: readonly { mediaType: MediaType; tmdbId: number; title: string }[],
+): Statement[] {
+  const now = Date.now();
+  const rows = refs.map((ref) => ({
+    id: toMediaId(ref.mediaType, ref.tmdbId),
+    mediaType: ref.mediaType,
+    tmdbId: ref.tmdbId,
+    slug: slugify(ref.title, ref.tmdbId),
+    title: ref.title,
+    createdAt: now,
+    updatedAt: now,
+  }));
+  return insertChunks(rows, (part) => db.insert(media).values(part).onConflictDoNothing());
 }
 
 // One statement writes the scalars, stamps the freshness marker and clears any

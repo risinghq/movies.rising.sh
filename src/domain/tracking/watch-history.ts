@@ -1,4 +1,4 @@
-import { and, eq, gte, lt, sql } from "drizzle-orm";
+import { and, eq, gte, isNotNull, lt, sql } from "drizzle-orm";
 import { db } from "void/db";
 import { libraryEntries, media, watchEvents } from "@schema";
 import type { MediaType } from "@/domain/catalog/media";
@@ -20,13 +20,15 @@ export type WatchHistoryRow = {
   episodeNumber: number | null;
 };
 
+// Dated plays only: every reader (heatmap, feed, recaps, mirror) places a play
+// in time, and an undated play has no place there.
 // Filters on local watch day (YYYY-MM-DD): `since` inclusive, `until` exclusive.
 // A year window is [`{year}-01-01`, `{year+1}-01-01`). Omit both for all-time.
 export async function listWatchHistory(
   userId: string,
   window?: { since?: string; until?: string },
 ): Promise<WatchHistoryRow[]> {
-  const filters = [eq(watchEvents.userId, userId)];
+  const filters = [eq(watchEvents.userId, userId), isNotNull(watchEvents.watchedAt)];
   if (window?.since) filters.push(gte(watchEvents.watchedOn, window.since));
   if (window?.until) filters.push(lt(watchEvents.watchedOn, window.until));
 
@@ -41,9 +43,9 @@ export async function listWatchHistory(
       releaseDate: media.releaseDate,
       runtime: media.runtime,
       score100: libraryEntries.score100,
-      watchedAt: watchEvents.watchedAt,
-      watchedOn: watchEvents.watchedOn,
-      utcOffsetMinutes: watchEvents.utcOffsetMinutes,
+      watchedAt: sql<number>`${watchEvents.watchedAt}`,
+      watchedOn: sql<string>`${watchEvents.watchedOn}`,
+      utcOffsetMinutes: sql<number>`${watchEvents.utcOffsetMinutes}`,
       seasonNumber: watchEvents.seasonNumber,
       episodeNumber: watchEvents.episodeNumber,
     })
@@ -61,7 +63,7 @@ export async function listWatchYears(userId: string): Promise<number[]> {
   const rows = await db
     .selectDistinct({ year: yearExpr })
     .from(watchEvents)
-    .where(eq(watchEvents.userId, userId));
+    .where(and(eq(watchEvents.userId, userId), isNotNull(watchEvents.watchedOn)));
 
   return rows
     .map((row) => Number(row.year))
