@@ -14,7 +14,7 @@ export const loader = defineHandler(async (c) => {
 
   const [settings, results] = await Promise.all([
     user ? getUserSettings(user.id) : Promise.resolve(null),
-    searchCatalog({ query, limit: 40 }),
+    searchCatalog({ query, limit: 40, userId: user?.id ?? null }),
   ]);
 
   return {

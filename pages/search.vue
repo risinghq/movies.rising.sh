@@ -60,7 +60,7 @@ function fromLocal(r: LocalResult): Item {
     voteAverage: r.voteAverage ?? null,
     slug: r.slug ?? null,
     media: r.id,
-    tracked: false,
+    tracked: r.inLibrary,
   };
 }
 
@@ -74,7 +74,7 @@ function fromRemote(r: RemoteResult): Item {
     voteAverage: r.voteAverage,
     slug: r.slug,
     media: r,
-    tracked: Boolean(r.cachedMediaId),
+    tracked: r.inLibrary,
   };
 }
 

@@ -313,6 +313,7 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
               :release-date="item.releaseDate"
               :slug="item.slug"
               :media="item.id"
+              :tracked="item.inLibrary"
               :active="activeIndex === index"
               @mouseenter="activeIndex = index"
             />
@@ -325,7 +326,7 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
               :release-date="item.releaseDate"
               :slug="item.slug"
               :media="item"
-              :tracked="Boolean(item.cachedMediaId)"
+              :tracked="item.inLibrary"
               :active="activeIndex === localCount + index"
               @mouseenter="activeIndex = localCount + index"
             />

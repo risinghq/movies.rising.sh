@@ -1,9 +1,11 @@
 import {
   findMediaByTmdbIds,
   searchLocalMedia,
+  type MediaRecord,
   type MediaType,
   upsertMediaFromTmdb,
 } from "@/domain/catalog/media";
+import { libraryMediaIds } from "@/domain/tracking/library-entries";
 import {
   fetchTmdbShowTotals,
   fetchTmdbTitle,
@@ -19,12 +21,22 @@ export type MediaSearchResult = TmdbMediaResult & {
   cachedMediaId: string | null;
 };
 
-export async function searchCatalog(input: { query: string; limit?: number }) {
+export type CatalogSearch = {
+  remoteEnabled: boolean;
+  local: Array<MediaRecord & { inLibrary: boolean }>;
+  remote: Array<MediaSearchResult & { inLibrary: boolean }>;
+};
+
+export async function searchCatalog(input: {
+  query: string;
+  limit?: number;
+  userId: string | null;
+}): Promise<CatalogSearch> {
   // An empty query has nothing to match; report whether remote is wired so the
   // search page can tailor its empty state without importing the token check.
   const remoteEnabled = Boolean(tmdbToken());
   if (!input.query.trim()) {
-    return { remoteEnabled, local: [], remote: [] as MediaSearchResult[] };
+    return { remoteEnabled, local: [], remote: [] };
   }
 
   const limit = input.limit ?? 20;
@@ -36,15 +48,22 @@ export async function searchCatalog(input: { query: string; limit?: number }) {
     remote.map((item) => ({ mediaType: item.mediaType, tmdbId: item.tmdbId })),
   );
   const cachedMap = new Map(cachedRows.map((row) => [`${row.mediaType}:${row.tmdbId}`, row.id]));
+  const inLibrary = input.userId
+    ? await libraryMediaIds(input.userId, [
+        ...local.map((row) => row.id),
+        ...cachedRows.map((row) => row.id),
+      ])
+    : new Set<string>();
 
   return {
     remoteEnabled,
-    local,
+    local: local.map((row) => ({ ...row, inLibrary: inLibrary.has(row.id) })),
     remote: remote.map((item) => {
-      const cacheKey = `${item.mediaType}:${item.tmdbId}`;
+      const cachedMediaId = cachedMap.get(`${item.mediaType}:${item.tmdbId}`) ?? null;
       return {
         ...item,
-        cachedMediaId: cachedMap.get(cacheKey) ?? null,
+        cachedMediaId,
+        inLibrary: cachedMediaId !== null && inLibrary.has(cachedMediaId),
       };
     }),
   };
