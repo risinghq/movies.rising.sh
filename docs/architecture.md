@@ -79,8 +79,9 @@ the link (see [Development](development.md#password-reset-links)) and sends it
 to the user. The link lands on `/reset-password`, which calls `resetPassword`
 and revokes the user's sessions. Better Auth owns the token: it lasts 24 hours
 and is single-use, and a link is live only while its `verification` row exists.
-Email delivery was not chosen because sending to arbitrary addresses from this
-Cloudflare account needs Workers Paid.
+Emailing the link needs Cloudflare Email Sending onboarding for a sender domain
+and a deploy token with Email Sending Edit. Once that exists,
+`sendResetPassword` can call `sendEmail` and nothing else changes.
 
 The database has catalog tables for media, people, credits, genres, companies,
 localized titles, and episodes. User data is in `library_entries`,
