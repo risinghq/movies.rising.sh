@@ -20,6 +20,13 @@ export default defineConfig({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: "/og.png" },
     ],
+    // favicon.ico stays for browsers without SVG favicons; it is listed first so
+    // browsers that support both pick the SVG, which follows the OS theme.
+    link: [
+      { rel: "icon", href: "/favicon.ico", sizes: "32x32" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+    ],
   },
   auth: {
     providers: ["email"],
