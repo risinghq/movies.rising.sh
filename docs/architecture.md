@@ -265,6 +265,12 @@ expression. Local development does not auto-fire them. Trigger the scheduled
 endpoint with `POST /__void/scheduled` when testing a cron locally.
 
 The title page reads public episode data and per-user watch marks separately.
+The show view carries a per-season episode count, the episodes of the first
+season, and the watched keys. The page loads another season's episodes from
+`/api/media/episodes` when the viewer opens it, and keeps loaded seasons across
+show-view refreshes. The crew page lists the first 12 credits of each
+department; `?department=` lists one department in full.
+
 Profile reads go through `src/read-models/viewable-profile.ts`, so a private
 profile is visible only to its owner. `profilePage` formats the displayed
 average score in the viewer's own rating system (the default system for an

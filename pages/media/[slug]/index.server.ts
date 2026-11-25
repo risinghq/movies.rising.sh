@@ -5,7 +5,7 @@ import { isMediaFavorited } from "@/domain/tracking/favorites";
 import { findEntry, type LibraryEntryRecord } from "@/domain/tracking/library-entries";
 import { hasWatch } from "@/domain/tracking/watch-events";
 import { buildShowView } from "@/domain/tracking/show-view";
-import type { SeasonEpisodes } from "@/domain/catalog/episodes";
+import type { SeasonEpisodes, SeasonSummary } from "@/domain/catalog/episodes";
 import { getUserSettings } from "@/domain/user";
 import { loadMedia } from "@/services/media-hydration";
 import { listMediaCompanies, listMediaGenres, listMediaTitles } from "@/domain/catalog/metadata";
@@ -13,6 +13,27 @@ import { getMediaStats } from "@/domain/insights/title-stats";
 import type { RatingSystem } from "@/domain/rating";
 
 export type Props = InferProps<typeof loader>;
+
+type MediaItem = NonNullable<Awaited<ReturnType<typeof loadMedia>>>;
+
+// Episode picker data is public; watched marks are per-user.
+async function loadShow(userId: string | null, item: MediaItem) {
+  if (item.mediaType !== "show") {
+    return {
+      seasons: [] as SeasonSummary[],
+      firstSeason: null as SeasonEpisodes | null,
+      watchedEpisodeKeys: [] as string[],
+      watchedEpisodeCount: 0,
+    };
+  }
+  const view = await buildShowView(userId, item);
+  return {
+    seasons: view.seasons,
+    firstSeason: view.firstSeason,
+    watchedEpisodeKeys: view.watchedKeys,
+    watchedEpisodeCount: view.progress.watchedEpisodeCount,
+  };
+}
 
 export const loader = defineHandler(async (c) => {
   const user = getUser();
@@ -27,12 +48,8 @@ export const loader = defineHandler(async (c) => {
     getMediaStats(item.id, item.mediaType),
   ]);
 
-  // Episode picker data is public; watched marks are per-user.
-  const showView = item.mediaType === "show" ? await buildShowView(user?.id ?? null, item) : null;
-  const seasons: SeasonEpisodes[] = showView?.seasons ?? [];
-  const watchedEpisodeKeys = showView?.watchedKeys ?? [];
-
-  let watchedEpisodeCount = showView?.progress.watchedEpisodeCount ?? 0;
+  const show = await loadShow(user?.id ?? null, item);
+  let watchedEpisodeCount = show.watchedEpisodeCount;
   let libraryEntry: LibraryEntryRecord | null = null;
   let isFavorited = false;
   let ratingSystem: RatingSystem = "score100";
@@ -57,10 +74,11 @@ export const loader = defineHandler(async (c) => {
     companies,
     altTitles,
     stats,
-    seasons,
+    seasons: show.seasons,
+    firstSeason: show.firstSeason,
     libraryEntry,
     watchedEpisodeCount,
-    watchedEpisodeKeys,
+    watchedEpisodeKeys: show.watchedEpisodeKeys,
     isFavorited,
     user: user ?? null,
     ratingSystem,

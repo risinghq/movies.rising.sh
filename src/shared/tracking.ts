@@ -1,4 +1,4 @@
-import type { SeasonEpisodes } from "@/shared/catalog";
+import type { SeasonEpisodes, SeasonSummary } from "@/shared/catalog";
 import type { HydrationState } from "@/shared/hydration";
 import type { LibraryStatus } from "@/shared/library-status";
 
@@ -40,8 +40,11 @@ export type ShowProgressDto = {
   complete: boolean;
 };
 
+// Long shows run past a thousand episodes, so the view carries the episodes of
+// the first season only. The client loads another season when it is opened.
 export type ShowViewDto = {
-  seasons: SeasonEpisodes[];
+  seasons: SeasonSummary[];
+  firstSeason: SeasonEpisodes | null;
   seasonCount: number | null;
   episodeCount: number | null;
   watchedKeys: string[];
