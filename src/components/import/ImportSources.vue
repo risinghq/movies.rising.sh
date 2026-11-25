@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useRouter } from "@void/vue";
 import Btn from "@/components/ui/Btn.vue";
+import ImportSourceCard from "@/components/import/ImportSourceCard.vue";
 import { connectSource, importMessage, scanExport } from "@/composables/useImportApi";
 import type { ConnectedSource, FileSource } from "@/shared/import";
 
@@ -88,18 +89,14 @@ async function upload(source: FileSource, event: Event) {
   <section class="flex flex-col gap-3">
     <h2 class="text-xs font-mono text-fg-subtle uppercase tracking-wider">bring your history</h2>
     <ul class="grid gap-3 sm:grid-cols-2">
-      <li
+      <ImportSourceCard
         v-for="source in CONNECTED"
         :key="source.id"
-        class="flex flex-col gap-3 rounded-xl border border-border bg-bg-subtle p-4"
+        :name="source.name"
+        :brings="source.brings"
       >
-        <div class="flex flex-col gap-1">
-          <span class="font-mono text-fg">{{ source.name }}</span>
-          <p class="text-sm text-fg-muted">{{ source.brings }}</p>
-          <p v-if="source.note" class="text-xs text-fg-subtle">{{ source.note }}</p>
-        </div>
+        <template v-if="source.note" #note>{{ source.note }}</template>
         <Btn
-          class="self-start mt-auto"
           variant="primary"
           size="sm"
           classicon="i-lucide:plug"
@@ -108,27 +105,24 @@ async function upload(source: FileSource, event: Event) {
         >
           {{ busy === source.id ? "opening..." : `connect ${source.name}` }}
         </Btn>
-      </li>
-      <li
+      </ImportSourceCard>
+      <ImportSourceCard
         v-for="source in FILES"
         :key="source.id"
-        class="flex flex-col gap-3 rounded-xl border border-border bg-bg-subtle p-4"
+        :name="source.name"
+        :brings="source.brings"
       >
-        <div class="flex flex-col gap-1">
-          <span class="font-mono text-fg">{{ source.name }}</span>
-          <p class="text-sm text-fg-muted">{{ source.brings }}</p>
-          <p class="text-xs text-fg-subtle">
-            <a
-              :href="source.href"
-              target="_blank"
-              rel="noopener"
-              class="text-accent hover:underline"
-              >{{ source.exportLink }}</a
-            >, {{ source.thenChoose }}
-          </p>
-        </div>
+        <template #note>
+          <a
+            :href="source.href"
+            target="_blank"
+            rel="noopener"
+            class="text-accent hover:underline"
+            >{{ source.exportLink }}</a
+          >, {{ source.thenChoose }}
+        </template>
         <label
-          class="self-start mt-auto inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-mono border border-border text-fg cursor-pointer hover:bg-bg focus-within:outline focus-within:outline-2 focus-within:outline-accent"
+          class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-mono border border-border text-fg cursor-pointer hover:bg-bg focus-within:outline focus-within:outline-2 focus-within:outline-accent"
           :class="{ 'pointer-events-none opacity-50': busy !== null }"
         >
           <span
@@ -150,7 +144,7 @@ async function upload(source: FileSource, event: Event) {
             @change="upload(source.id, $event)"
           />
         </label>
-      </li>
+      </ImportSourceCard>
     </ul>
     <p v-if="busy === 'letterboxd' || busy === 'imdb'" role="status" class="text-xs text-fg-subtle">
       matching each title to TMDB. a few thousand titles take under a minute.

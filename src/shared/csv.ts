@@ -1,36 +1,52 @@
 // RFC 4180: quoted fields may hold commas, newlines and doubled quotes.
 export function parseCsv(text: string): string[][] {
+  const input = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
   const rows: string[][] = [];
   let row: string[] = [];
-  let field = "";
-  let quoted = false;
-  const input = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-
-  for (let i = 0; i < input.length; i++) {
-    const ch = input[i];
-    if (quoted) {
-      if (ch !== '"') field += ch;
-      else if (input[i + 1] === '"') {
-        field += '"';
-        i++;
-      } else quoted = false;
-    } else if (ch === '"') quoted = true;
-    else if (ch === ",") {
-      row.push(field);
-      field = "";
-    } else if (ch === "\n" || ch === "\r") {
-      if (ch === "\r" && input[i + 1] === "\n") i++;
-      row.push(field);
-      rows.push(row);
-      row = [];
-      field = "";
-    } else field += ch;
-  }
-  if (field !== "" || row.length > 0) {
+  let i = 0;
+  while (i < input.length) {
+    const [field, end] = readField(input, i);
     row.push(field);
+    i = end + 1;
+    if (input[end] === ",") {
+      if (i === input.length) row.push("");
+      continue;
+    }
+    if (input[end] === "\r" && input[i] === "\n") i++;
     rows.push(row);
+    row = [];
   }
+  if (row.length > 0) rows.push(row);
   return rows.filter((r) => r.some((cell) => cell !== ""));
+}
+
+// The field starting at `start`, and the index of the delimiter that ends it
+// (input.length at the end of the text).
+function readField(input: string, start: number): [string, number] {
+  if (input[start] !== '"') {
+    const end = nextDelimiter(input, start);
+    return [input.slice(start, end), end];
+  }
+  let value = "";
+  let i = start + 1;
+  for (;;) {
+    const close = input.indexOf('"', i);
+    if (close === -1) return [value + input.slice(i), input.length];
+    value += input.slice(i, close);
+    if (input[close + 1] !== '"') {
+      const end = nextDelimiter(input, close + 1);
+      return [value + input.slice(close + 1, end), end];
+    }
+    value += '"';
+    i = close + 2;
+  }
+}
+
+const DELIMITER = /[,\r\n]/g;
+
+function nextDelimiter(input: string, from: number): number {
+  DELIMITER.lastIndex = from;
+  return DELIMITER.exec(input)?.index ?? input.length;
 }
 
 // Rows keyed by the header line. A missing cell reads as "".
