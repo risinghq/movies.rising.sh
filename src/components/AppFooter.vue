@@ -26,6 +26,9 @@ const modalRef = ref<InstanceType<typeof Modal> | null>(null);
     <p class="container pb-4 text-fg-subtle/60 text-xs">
       This product uses the TMDB API but is not endorsed or certified by TMDB. It uses Trakt but is
       not endorsed or certified by Trakt.
+      <a class="link-subtle underline underline-offset-2" href="https://rising.sh/privacy/#movies"
+        >privacy</a
+      >
     </p>
 
     <Modal ref="modalRef" title="keyboard shortcuts" class="w-auto max-w-lg">
