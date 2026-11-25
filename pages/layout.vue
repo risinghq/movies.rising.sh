@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
+import "@fontsource-variable/geist";
+import "@fontsource-variable/geist-mono";
 import "virtual:uno.css";
 import "@/styles/app.css";
 import { useShared } from "@void/vue";

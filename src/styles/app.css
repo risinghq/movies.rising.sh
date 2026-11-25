@@ -151,56 +151,6 @@
   }
 }
 
-@font-face {
-  font-family: "Geist";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/Geist-Regular.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Geist";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/fonts/Geist-Medium.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Geist";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/fonts/Geist-SemiBold.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Geist";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/fonts/Geist-Bold.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Geist Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/GeistMono-Regular.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Geist Mono";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/fonts/GeistMono-Medium.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Geist Mono";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/fonts/GeistMono-Bold.ttf") format("truetype");
-}
-
 *,
 *::before,
 *::after {
@@ -230,7 +180,7 @@ body {
   margin: 0;
   background-color: var(--bg);
   color: var(--fg);
-  font-family: "Geist", "IBM Plex Sans Arabic", system-ui, -apple-system, sans-serif;
+  font-family: "Geist Variable", "IBM Plex Sans Arabic", system-ui, -apple-system, sans-serif;
   line-height: 1.6;
 }
 
@@ -250,7 +200,7 @@ h3,
 h4 {
   margin: 0;
   line-height: 1.2;
-  font-family: "Geist Mono", "IBM Plex Sans Arabic", monospace;
+  font-family: "Geist Mono Variable", "IBM Plex Sans Arabic", monospace;
 }
 
 p {

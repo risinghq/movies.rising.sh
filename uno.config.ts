@@ -24,8 +24,8 @@ export default defineConfig({
   theme: {
     spacing: { DEFAULT: "4px" },
     font: {
-      mono: "'IBM Plex Sans Arabic', monospace",
-      sans: "'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif",
+      mono: "'Geist Mono Variable', 'IBM Plex Sans Arabic', monospace",
+      sans: "'Geist Variable', 'IBM Plex Sans Arabic', system-ui, -apple-system, sans-serif",
     },
     text: {
       "2xs": { fontSize: "0.6875rem" }, // 11px
