@@ -4,13 +4,15 @@ import type { ImportItem, ImportMediaRef, ImportScan, SkippedItem } from "./item
 
 // The Trakt API v2 payloads the reader uses, as fetched from
 // /users/{id}/history, /ratings, /watchlist, /favorites and
-// /users/hidden/dropped. Each is the concatenation of every page.
+// /users/hidden/dropped. Each is the concatenation of every page read.
+// `truncated` names the lists the reader cut short.
 export type TraktExport = {
   history: unknown[];
   ratings: unknown[];
   watchlist: unknown[];
   favorites: unknown[];
   dropped: unknown[];
+  truncated: string[];
 };
 
 type TraktIds = { tmdb?: unknown };
@@ -49,6 +51,7 @@ export function readTrakt(data: TraktExport): ImportScan {
   for (const row of rows(data.dropped)) {
     keep(withTitle(row, (media) => ({ kind: "dropped", media })));
   }
+  for (const title of data.truncated) skipped.push({ reason: "list_truncated", title });
   return { items, skipped };
 }
 

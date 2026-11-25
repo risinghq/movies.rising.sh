@@ -164,9 +164,10 @@ bound. `db.batch()` is one atomic transaction.
 An import moves another tracker's data into one user's library. It runs in four
 stages:
 
-1. A reader under `src/domain/import/` (`trakt.ts`) turns a source's export into
-   `ImportItem`s: plays, ratings, planned titles, favorites, and dropped titles.
-   It reports what it cannot map, such as episode ratings, as skipped.
+1. A reader under `src/domain/import/` (`trakt.ts`, `tmdb.ts`) turns a source's
+   export into `ImportItem`s: plays, ratings, planned titles, favorites, and
+   dropped titles. It reports what it cannot map, such as episode ratings, as
+   skipped.
 2. `stageImport` in [`src/services/import.ts`](../src/services/import.ts) stores
    the items and a summary in an `imports` row in state `scanned`. The summary
    lists batch days: days with so many plays that they were bulk marks, not
@@ -204,8 +205,21 @@ nothing without the server's read token. The scan exchanges it for a user access
 token, reads the account's rated, watchlist and favorite lists, revokes the
 access token, and stages the result. No user token is stored. TMDB keeps no
 watch history, so a TMDB import holds ratings and lists only. The scan runs in
-one request and reads at most 40 list pages, within the free plan's 50
-subrequests; a list it cut short is reported as skipped.
+one request and reads at most `MAX_PAGES` (500) list pages, well under the paid
+Workers plan's 10,000 subrequests per request; a list it cut short is reported
+as skipped.
+
+Trakt connects through OAuth with PKCE
+([`src/services/import-trakt.ts`](../src/services/import-trakt.ts)). The Trakt
+app is public: it has a client ID (`TRAKT_CLIENT_ID`) and no secret. The connect
+route returns Trakt's authorize URL, a state, and a code verifier; the client
+keeps the state and verifier across Trakt's page and checks the state when Trakt
+returns to `/import/trakt/callback`. The scan route takes the code and verifier,
+exchanges them for an access token, reads history, ratings, watchlist, favorites
+and dropped shows, revokes the token, and stages the result. No user token is
+stored. The scan reads at most `MAX_PAGES` (200) pages of 250 rows; a list it
+cut short is reported as skipped. The redirect URI must be registered on the
+Trakt app, so a new origin needs a new entry there.
 
 ## Queues, crons, and views
 

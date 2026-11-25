@@ -34,5 +34,6 @@ function readTraktExport(value: unknown): TraktExport | null {
     watchlist: list("watchlist"),
     favorites: list("favorites"),
     dropped: list("dropped"),
+    truncated: [],
   };
 }

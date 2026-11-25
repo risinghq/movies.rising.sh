@@ -30,6 +30,21 @@ export type ImportError =
   | { kind: "empty" }
   | { kind: "too_large" };
 
+// A source read through the user's approval (TMDB, Trakt) can also be down or
+// refuse the approval.
+export type ConnectedImportError =
+  | ImportError
+  | { kind: "source_unavailable" }
+  | { kind: "not_approved" };
+
+export function connectedImportErrorStatus(
+  error: ConnectedImportError,
+): 400 | 404 | 409 | 413 | 502 {
+  if (error.kind === "source_unavailable") return 502;
+  if (error.kind === "not_approved") return 400;
+  return importErrorStatus(error);
+}
+
 export function importErrorStatus(error: ImportError): 400 | 404 | 409 | 413 {
   switch (error.kind) {
     case "not_found":

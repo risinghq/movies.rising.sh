@@ -5,10 +5,10 @@ import { Id, NullNum, NullStr, looseArray, parse } from "./parse";
 
 export const TMDB_APPROVE_URL = "https://www.themoviedb.org/auth/access";
 
-// A Worker on the free plan may make 50 subrequests per request. A scan
-// reads at most this many list pages (20 titles each) and reports any list it
-// cut short.
-const MAX_PAGES = 40;
+// A scan reads at most this many list pages (20 titles each), well under the
+// paid Workers plan's 10,000 subrequests per request. 10,000 titles is about
+// what the stored import holds. A list cut short is reported.
+export const MAX_PAGES = 500;
 
 export type TmdbAccess = { accessToken: string; accountId: string };
 

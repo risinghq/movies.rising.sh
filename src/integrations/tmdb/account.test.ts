@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { readTmdb } from "@/domain/import/tmdb";
-import { fetchTmdbAccountLists } from "./account";
+import { MAX_PAGES, fetchTmdbAccountLists } from "./account";
 
 const { tmdbV4Fetch } = vi.hoisted(() => ({
   tmdbV4Fetch:
@@ -68,12 +68,12 @@ describe("fetchTmdbAccountLists", () => {
   it("stops at the page budget and names the lists it cut short", async () => {
     tmdbV4Fetch.mockResolvedValue({
       status: 200,
-      body: { results: [ratedMovie(1, 5)], total_pages: 100 },
+      body: { results: [ratedMovie(1, 5)], total_pages: MAX_PAGES + 1 },
     });
 
     const lists = await fetchTmdbAccountLists(access);
 
-    expect(tmdbV4Fetch).toHaveBeenCalledTimes(40);
+    expect(tmdbV4Fetch).toHaveBeenCalledTimes(MAX_PAGES);
     expect(lists.truncated).toEqual([
       "Rated movies",
       "Rated shows",

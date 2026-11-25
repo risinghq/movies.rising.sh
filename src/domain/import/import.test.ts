@@ -59,6 +59,7 @@ describe("readTrakt", () => {
         { type: "show", notes: " Things feel real. ", show: { title: "Chernobyl", ...ids(87108) } },
       ],
       dropped: [{ type: "show", show: { title: "Lost", ids: { tmdb: null } } }],
+      truncated: ["History"],
     });
 
     expect(scan.items).toEqual([
@@ -76,6 +77,7 @@ describe("readTrakt", () => {
     expect(scan.skipped).toEqual([
       { reason: "episode_rating", title: "Chernobyl" },
       { reason: "no_tmdb_id", title: "Lost" },
+      { reason: "list_truncated", title: "History" },
     ]);
   });
 });

@@ -1,6 +1,7 @@
 import { defineHandler } from "void";
 import { requireAuth } from "void/auth";
-import { scanTmdb, tmdbImportErrorStatus } from "@/services/import-tmdb";
+import { connectedImportErrorStatus } from "@/services/import";
+import { scanTmdb } from "@/services/import-tmdb";
 
 export const POST = defineHandler(async (c) => {
   const user = requireAuth(c);
@@ -9,6 +10,6 @@ export const POST = defineHandler(async (c) => {
     return c.json({ error: { kind: "invalid_payload" } }, 400);
   }
   const staged = await scanTmdb(user.id, body.requestToken);
-  if (!staged.ok) return c.json({ error: staged.error }, tmdbImportErrorStatus(staged.error));
+  if (!staged.ok) return c.json({ error: staged.error }, connectedImportErrorStatus(staged.error));
   return c.json(staged.value);
 });

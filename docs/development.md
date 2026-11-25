@@ -19,6 +19,7 @@ Local configuration is a single `.env` file. `env.ts` defines these names:
 | `BETTER_AUTH_SECRET`     | Yes      | Better Auth secret                                          |
 | `TMDB_READ_ACCESS_TOKEN` | No       | Remote TMDB search, cache-on-select, and metadata hydration |
 | `ADMIN_EMAIL`            | No       | Gives the matching newly created user the `admin` role      |
+| `TRAKT_CLIENT_ID`        | No       | Trakt import; the public client ID of the Trakt app         |
 
 Create the required secret, install packages, and start the app:
 
@@ -123,9 +124,10 @@ variables:
   subdomain.
 
 The Worker reads `BETTER_AUTH_SECRET`, which is required, and
-`TMDB_READ_ACCESS_TOKEN` and `ADMIN_EMAIL`, which are optional. They are Worker
-secrets. Run `vp exec void connect --platform cloudflare` once to save the
-target, then set each secret with `vp exec void secret put <NAME>=<value>`.
+`TMDB_READ_ACCESS_TOKEN`, `TRAKT_CLIENT_ID` and `ADMIN_EMAIL`, which are
+optional. They are Worker secrets. Run
+`vp exec void connect --platform cloudflare` once to save the target, then set
+each secret with `vp exec void secret put <NAME>=<value>`.
 
 After the first deploy to an empty database, load the catalog with
 `bun run db:seed:remote`.
