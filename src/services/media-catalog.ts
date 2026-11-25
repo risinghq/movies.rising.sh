@@ -6,6 +6,7 @@ import {
 } from "@/domain/catalog/media";
 import {
   fetchTmdbShowTotals,
+  fetchTmdbTitle,
   searchTmdbMedia,
   tmdbToken,
   type TmdbMediaResult,
@@ -99,6 +100,22 @@ export async function cacheMediaSelection(input: unknown) {
     ...showTotals,
   });
   return { mediaId };
+}
+
+// A TMDB result outside the catalog links to its slug before anyone caches it.
+// The slug ends in the TMDB id but does not say movie or show, so both are
+// looked up and the one whose own slug matches is cached.
+export async function cacheMediaBySlug(slug: string): Promise<string | null> {
+  const tmdbId = Number(slug.slice(slug.lastIndexOf("-") + 1));
+  if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0 || !tmdbToken()) return null;
+
+  const candidates = await Promise.all(
+    (["movie", "show"] as const).map((mediaType) =>
+      fetchTmdbTitle({ mediaType, tmdbId }).catch(() => null),
+    ),
+  );
+  const match = candidates.find((c) => c?.slug === slug);
+  return match ? (await cacheMediaSelection(match)).mediaId : null;
 }
 
 // Boundary parse for the `media` field of a tracking request. Light shape check

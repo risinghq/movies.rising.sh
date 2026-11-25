@@ -3,9 +3,10 @@ import { db } from "void/db";
 import { companies, genres, mediaCompanies, mediaGenres, mediaTitles } from "@schema";
 import { insertChunks, selectByIds, type Statement } from "@/db/kernel";
 import type { AltTitleInput, CompanyInput, GenreInput } from "@/shared/types/metadata";
+import type { CompanyKind } from "@/shared/company";
 
 export type GenreView = { name: string };
-export type CompanyView = { kind: "company" | "network"; name: string };
+export type CompanyView = { kind: CompanyKind; tmdbId: number; name: string };
 export type AltTitleView = { languageCode: string; title: string };
 
 export function listMediaGenres(mediaId: string): Promise<GenreView[]> {
@@ -36,10 +37,27 @@ export async function genresByMedia(mediaIds: readonly string[]): Promise<Map<st
 
 export function listMediaCompanies(mediaId: string): Promise<CompanyView[]> {
   return db
-    .select({ kind: companies.kind, name: companies.name })
+    .select({ kind: companies.kind, tmdbId: companies.tmdbId, name: companies.name })
     .from(mediaCompanies)
     .innerJoin(companies, eq(mediaCompanies.companyId, companies.id))
     .where(eq(mediaCompanies.mediaId, mediaId));
+}
+
+// A company is stored when a cached title names it, so a company link from a
+// title page always finds its row.
+export async function findCompany(kind: CompanyKind, tmdbId: number) {
+  const rows = await db
+    .select({
+      kind: companies.kind,
+      tmdbId: companies.tmdbId,
+      name: companies.name,
+      logoPath: companies.logoPath,
+      originCountry: companies.originCountry,
+    })
+    .from(companies)
+    .where(eq(companies.id, companyId(kind, tmdbId)))
+    .limit(1);
+  return rows[0] ?? null;
 }
 
 export function listMediaTitles(mediaId: string): Promise<AltTitleView[]> {

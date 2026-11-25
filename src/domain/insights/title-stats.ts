@@ -5,11 +5,6 @@ import { airedEpisodeRefs } from "@/domain/catalog/episodes";
 import { resolveStatus, type LibraryStatus } from "@/shared/library-status";
 import type { MediaType } from "@/domain/catalog/media";
 
-// Platform-native stats only render once enough users engage, so a tiny user
-// base never shows an embarrassing "score 80 from 1 person".
-export const STATS_MIN_TRACKED = 3;
-export const STATS_MIN_SCORES = 5;
-
 export type MediaStats = {
   trackedCount: number;
   statusCounts: Record<LibraryStatus, number>;

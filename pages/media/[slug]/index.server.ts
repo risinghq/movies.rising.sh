@@ -9,7 +9,6 @@ import type { SeasonEpisodes, SeasonSummary } from "@/domain/catalog/episodes";
 import { getUserSettings } from "@/domain/user";
 import { loadMedia } from "@/services/media-hydration";
 import { listMediaCompanies, listMediaGenres, listMediaTitles } from "@/domain/catalog/metadata";
-import { getMediaStats } from "@/domain/insights/title-stats";
 import type { RatingSystem } from "@/domain/rating";
 
 export type Props = InferProps<typeof loader>;
@@ -21,7 +20,7 @@ async function loadShow(userId: string | null, item: MediaItem) {
   if (item.mediaType !== "show") {
     return {
       seasons: [] as SeasonSummary[],
-      firstSeason: null as SeasonEpisodes | null,
+      openSeason: null as SeasonEpisodes | null,
       watchedEpisodeKeys: [] as string[],
       watchedEpisodeCount: 0,
     };
@@ -29,7 +28,7 @@ async function loadShow(userId: string | null, item: MediaItem) {
   const view = await buildShowView(userId, item);
   return {
     seasons: view.seasons,
-    firstSeason: view.firstSeason,
+    openSeason: view.openSeason,
     watchedEpisodeKeys: view.watchedKeys,
     watchedEpisodeCount: view.progress.watchedEpisodeCount,
   };
@@ -41,11 +40,10 @@ export const loader = defineHandler(async (c) => {
   const item = await loadMedia(c.req.param("slug") as string);
   if (!item) return c.notFound();
 
-  const [genres, companies, altTitles, stats] = await Promise.all([
+  const [genres, companies, altTitles] = await Promise.all([
     listMediaGenres(item.id),
     listMediaCompanies(item.id),
     listMediaTitles(item.id),
-    getMediaStats(item.id, item.mediaType),
   ]);
 
   const show = await loadShow(user?.id ?? null, item);
@@ -73,9 +71,8 @@ export const loader = defineHandler(async (c) => {
     genres,
     companies,
     altTitles,
-    stats,
     seasons: show.seasons,
-    firstSeason: show.firstSeason,
+    openSeason: show.openSeason,
     libraryEntry,
     watchedEpisodeCount,
     watchedEpisodeKeys: show.watchedEpisodeKeys,

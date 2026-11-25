@@ -2,7 +2,12 @@ import type { MediaRecord } from "@/domain/catalog/media";
 import { listSeasonEpisodes, listSeasonSummaries } from "@/domain/catalog/episodes";
 import { EPISODES_TTL_MS, hydrationState } from "@/domain/hydration";
 import { deriveShowProgress, loadShowEpisodes, resolveWatchedEpisodes } from "./progress";
-import { episodeKey, type ShowProgressDto, type ShowViewDto } from "@/shared/tracking";
+import {
+  episodeKey,
+  openingSeason,
+  type ShowProgressDto,
+  type ShowViewDto,
+} from "@/shared/tracking";
 
 const EMPTY_PROGRESS: ShowProgressDto = {
   watchedEpisodeCount: 0,
@@ -16,14 +21,6 @@ export async function buildShowView(
   media: MediaRecord,
 ): Promise<ShowViewDto> {
   const seasons = await listSeasonSummaries(media.id);
-  const first = seasons[0];
-  const firstSeason = first
-    ? {
-        seasonNumber: first.seasonNumber,
-        episodes: await listSeasonEpisodes(media.id, first.seasonNumber),
-      }
-    : null;
-
   let watchedKeys: string[] = [];
   let progress = EMPTY_PROGRESS;
 
@@ -41,9 +38,15 @@ export async function buildShowView(
     };
   }
 
+  const opening = openingSeason(seasons, watchedKeys);
+  const openSeason =
+    opening === null
+      ? null
+      : { seasonNumber: opening, episodes: await listSeasonEpisodes(media.id, opening) };
+
   return {
     seasons,
-    firstSeason,
+    openSeason,
     seasonCount: media.seasonCount,
     episodeCount: media.episodeCount,
     watchedKeys,

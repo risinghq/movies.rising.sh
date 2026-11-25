@@ -21,11 +21,10 @@ export type TmdbMediaResult = {
   slug: string;
 };
 
-// Only movie/tv hits are kept; person results (and rows missing an id) drop at
-// parse.
-const MultiItem = v.object({
+// The fields a search hit, a discover row and a title lookup share. A row
+// missing its id drops at parse.
+const titleFields = {
   id: Id,
-  media_type: v.picklist(["movie", "tv"]),
   title: NullStr,
   name: NullStr,
   original_title: NullStr,
@@ -38,17 +37,20 @@ const MultiItem = v.object({
   vote_average: NullNum,
   vote_count: NullNum,
   popularity: NullNum,
-});
+};
+export const TitleItem = v.object(titleFields);
+type TitleItemPayload = v.InferOutput<typeof TitleItem>;
+
+// Only movie/tv hits are kept; person results drop at parse.
+const MultiItem = v.object({ ...titleFields, media_type: v.picklist(["movie", "tv"]) });
 const MultiSearch = v.object({ results: looseArray(MultiItem) });
 
-type MultiItemPayload = v.InferOutput<typeof MultiItem>;
-
-function mapItem(item: MultiItemPayload): TmdbMediaResult | null {
+export function mapTitle(item: TitleItemPayload, mediaType: MediaType): TmdbMediaResult | null {
   const title = item.title ?? item.name;
   if (!title) return null;
 
   return {
-    mediaType: item.media_type === "tv" ? "show" : "movie",
+    mediaType,
     tmdbId: item.id,
     title,
     originalTitle: item.original_title ?? item.original_name,
@@ -65,6 +67,14 @@ function mapItem(item: MultiItemPayload): TmdbMediaResult | null {
   };
 }
 
+export function isTitle(item: TmdbMediaResult | null): item is TmdbMediaResult {
+  return item !== null;
+}
+
+export function tmdbPath(mediaType: MediaType): "movie" | "tv" {
+  return mediaType === "show" ? "tv" : "movie";
+}
+
 export async function searchTmdbMedia(input: { query: string; limit?: number }) {
   const query = input.query.trim();
   if (!query) return [];
@@ -77,8 +87,8 @@ export async function searchTmdbMedia(input: { query: string; limit?: number }) 
   });
 
   return parse(MultiSearch, raw)
-    .results.map(mapItem)
-    .filter((item): item is TmdbMediaResult => item !== null)
+    .results.map((item) => mapTitle(item, item.media_type === "tv" ? "show" : "movie"))
+    .filter(isTitle)
     .slice(0, pageSize);
 }
 
@@ -91,4 +101,9 @@ export async function fetchTmdbShowTotals(input: { tmdbId: number }) {
     seasonCount: totals.number_of_seasons,
     episodeCount: totals.number_of_episodes,
   };
+}
+
+export async function fetchTmdbTitle(input: { mediaType: MediaType; tmdbId: number }) {
+  const raw = await tmdbFetch<unknown>(`/${tmdbPath(input.mediaType)}/${input.tmdbId}`);
+  return mapTitle(parse(TitleItem, raw), input.mediaType);
 }

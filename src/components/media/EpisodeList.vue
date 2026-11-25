@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import type { EpisodeRecord, SeasonSummary } from "@/domain/catalog/episodes";
+import { episodeKey, openingSeason, seasonName, watchedBySeason } from "@/shared/tracking";
 import EpisodeRow from "./EpisodeRow.vue";
+import SeasonPicker from "./SeasonPicker.vue";
 
 const props = defineProps<{
   seasons: SeasonSummary[];
@@ -19,118 +21,100 @@ const emit = defineEmits<{
 }>();
 
 const watched = computed(() => new Set(props.watchedKeys));
+const watchedCounts = computed(() => watchedBySeason(props.watchedKeys));
 
-const watchedBySeason = computed(() => {
-  const counts = new Map<number, number>();
-  for (const k of props.watchedKeys) {
-    const seasonNumber = Number(k.slice(0, k.indexOf(":")));
-    counts.set(seasonNumber, (counts.get(seasonNumber) ?? 0) + 1);
-  }
-  return counts;
+// Matches the season the server loaded, so the first paint needs no fetch.
+const picked = ref(openingSeason(props.seasons, props.watchedKeys));
+const failed = ref(false);
+
+const season = computed(() => props.seasons.find((s) => s.seasonNumber === picked.value) ?? null);
+const rows = computed(() => (picked.value === null ? undefined : props.episodes.get(picked.value)));
+const countText = computed(() => {
+  if (!season.value) return "";
+  if (!props.canLog) return `${season.value.episodeCount} episodes`;
+  const seen = watchedCounts.value.get(season.value.seasonNumber) ?? 0;
+  return `${seen} / ${season.value.episodeCount} watched`;
 });
 
-const openSeasons = ref(new Set<number>(props.seasons.slice(0, 1).map((s) => s.seasonNumber)));
-const failedSeasons = ref(new Set<number>());
-
-async function toggleSeason(seasonNumber: number) {
-  const next = new Set(openSeasons.value);
-  if (next.has(seasonNumber)) next.delete(seasonNumber);
-  else next.add(seasonNumber);
-  openSeasons.value = next;
-  if (next.has(seasonNumber) && !props.episodes.has(seasonNumber)) await load(seasonNumber);
-}
-
 async function load(seasonNumber: number) {
-  const failed = new Set(failedSeasons.value);
-  failed.delete(seasonNumber);
+  failed.value = false;
   try {
     await props.loadSeason(seasonNumber);
   } catch {
-    failed.add(seasonNumber);
+    if (picked.value === seasonNumber) failed.value = true;
   }
-  failedSeasons.value = failed;
 }
 
-function key(seasonNumber: number, episodeNumber: number) {
-  return `${seasonNumber}:${episodeNumber}`;
+function ensureLoaded() {
+  if (picked.value !== null && !props.episodes.has(picked.value)) void load(picked.value);
 }
 
-function isWatched(seasonNumber: number, episodeNumber: number) {
-  return watched.value.has(key(seasonNumber, episodeNumber));
+function pick(seasonNumber: number) {
+  picked.value = seasonNumber;
+  failed.value = false;
+  ensureLoaded();
 }
+
+// Seasons arrive late when episodes hydrate after the first paint.
+watch(
+  () => props.seasons,
+  (seasons) => {
+    if (seasons.some((s) => s.seasonNumber === picked.value)) return;
+    picked.value = openingSeason(seasons, props.watchedKeys);
+    ensureLoaded();
+  },
+);
+
+onMounted(ensureLoaded);
 </script>
 
 <template>
   <div
     v-if="seasons.length === 0"
-    class="rounded-lg border border-dashed border-border px-4 py-6 text-sm font-mono text-fg-subtle"
+    class="rounded-lg border border-dashed border-border px-4 py-6 text-[0.8125rem] font-mono text-fg-subtle"
   >
     episodes are still loading, check back in a moment
   </div>
 
-  <div v-else class="flex flex-col gap-3">
-    <div
-      v-for="season in seasons"
-      :key="season.seasonNumber"
-      class="rounded-lg border border-border bg-bg-subtle"
-    >
-      <button
-        type="button"
-        class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left focus-ring"
-        @click="toggleSeason(season.seasonNumber)"
-      >
-        <span class="text-sm font-mono text-fg lowercase">
-          {{ season.seasonNumber === 0 ? "specials" : `season ${season.seasonNumber}` }}
-        </span>
-        <span class="flex items-center gap-3 text-[0.7rem] font-mono text-fg-subtle">
-          {{ watchedBySeason.get(season.seasonNumber) ?? 0 }} / {{ season.episodeCount }} watched
-          <span
-            class="h-3.5 w-3.5 transition-transform"
-            :class="[
-              openSeasons.has(season.seasonNumber)
-                ? 'i-lucide:chevron-down'
-                : 'i-lucide:chevron-right',
-            ]"
-            aria-hidden="true"
-          />
-        </span>
-      </button>
+  <div v-else class="flex flex-col gap-3 font-mono">
+    <div class="flex items-center gap-2.5 sm:gap-4">
+      <SeasonPicker :seasons="seasons" :picked="picked" @pick="pick" />
+      <span class="flex-none text-xs text-fg-subtle tabular-nums">{{ countText }}</span>
+    </div>
 
-      <template v-if="openSeasons.has(season.seasonNumber)">
-        <p
-          v-if="failedSeasons.has(season.seasonNumber)"
-          class="border-t border-border px-4 py-3 text-[0.7rem] font-mono text-fg-subtle"
+    <div
+      id="season-episodes"
+      role="tabpanel"
+      :aria-label="picked === null ? undefined : seasonName(picked)"
+      class="overflow-hidden rounded-lg border border-border bg-bg-subtle text-sm"
+    >
+      <p v-if="failed" class="px-3.5 sm:px-4 py-3.5 text-[0.8125rem] text-fg-muted">
+        episodes failed to load.
+        <button
+          type="button"
+          class="text-accent underline underline-offset-3 focus-ring"
+          @click="picked !== null && load(picked)"
         >
-          episodes failed to load.
-          <button
-            type="button"
-            class="underline hover:text-fg focus-ring"
-            @click="load(season.seasonNumber)"
-          >
-            try again
-          </button>
-        </p>
-        <p
-          v-else-if="!episodes.has(season.seasonNumber)"
-          class="border-t border-border px-4 py-3 text-[0.7rem] font-mono text-fg-subtle"
-          aria-live="polite"
-        >
-          loading episodes
-        </p>
-      </template>
-      <ul
-        v-if="openSeasons.has(season.seasonNumber) && episodes.has(season.seasonNumber)"
-        class="flex flex-col divide-y divide-border border-t border-border"
+          try again
+        </button>
+      </p>
+      <p
+        v-else-if="!rows"
+        class="px-3.5 sm:px-4 py-3.5 text-[0.8125rem] text-fg-subtle"
+        aria-live="polite"
       >
+        loading episodes…
+      </p>
+      <ul v-else>
         <EpisodeRow
-          v-for="ep in episodes.get(season.seasonNumber)"
+          v-for="ep in rows"
           :key="ep.episodeNumber"
           :episode="ep"
-          :watched="isWatched(season.seasonNumber, ep.episodeNumber)"
+          :watched="watched.has(episodeKey(ep.seasonNumber, ep.episodeNumber))"
           :can-log="canLog"
           :saving="saving"
-          @log="emit('log', season.seasonNumber, ep.episodeNumber)"
-          @unlog="emit('unlog', season.seasonNumber, ep.episodeNumber)"
+          @log="emit('log', ep.seasonNumber, ep.episodeNumber)"
+          @unlog="emit('unlog', ep.seasonNumber, ep.episodeNumber)"
         />
       </ul>
     </div>

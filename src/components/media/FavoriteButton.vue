@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import Btn from "@/components/ui/Btn.vue";
 
 const props = defineProps<{
   mediaId: string;
@@ -43,24 +42,27 @@ async function toggle() {
 </script>
 
 <template>
-  <Btn
-    variant="secondary"
+  <button
+    type="button"
+    class="title-action"
     :aria-label="favorited ? 'remove from favorites' : 'add to favorites'"
     :aria-pressed="favorited ? 'true' : 'false'"
     :disabled="saving"
     :title="error || undefined"
-    class="py-1.5! px-2.5!"
     @click="toggle"
   >
     <span
       :key="pulse"
-      class="i-lucide:heart size-[1em]"
-      :class="pulse > 0 ? (favorited ? 'pulse-spring' : 'pulse-settle') : ''"
+      class="size-[1.1em]"
+      :class="[
+        favorited ? 'i-lucide:heart text-red-400' : 'i-lucide:heart',
+        pulse > 0 ? (favorited ? 'pulse-spring' : 'pulse-settle') : '',
+      ]"
       aria-hidden="true"
     />
     <span class="max-sm:sr-only">{{ favorited ? "favorited" : "favorite" }}</span>
     <span v-if="error" role="alert" class="sr-only">{{ error }}</span>
-  </Btn>
+  </button>
 </template>
 
 <style scoped>

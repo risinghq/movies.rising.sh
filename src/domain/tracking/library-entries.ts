@@ -117,6 +117,19 @@ async function watchSummaries(
   return new Map(rows.map((row) => [row.mediaId, { lastWatchedAt: row.lastWatchedAt }]));
 }
 
+export async function libraryMediaIds(
+  userId: string,
+  mediaIds: readonly string[],
+): Promise<Set<string>> {
+  const rows = await selectByIds(mediaIds, (batch) =>
+    db
+      .select({ mediaId: libraryEntries.mediaId })
+      .from(libraryEntries)
+      .where(and(eq(libraryEntries.userId, userId), inArray(libraryEntries.mediaId, batch))),
+  );
+  return new Set(rows.map((r) => r.mediaId));
+}
+
 export async function entriesWithProgress(userId: string): Promise<LibraryEntryWithProgress[]> {
   const rows = await db
     .select({ entry: libraryEntries, media })
