@@ -28,7 +28,7 @@ export type ImportDropped = { kind: "dropped"; media: ImportMediaRef };
 
 export type ImportItem = ImportPlay | ImportRating | ImportPlanned | ImportFavorite | ImportDropped;
 
-export type SkipReason = "season_rating" | "episode_rating" | "no_tmdb_id";
+export type SkipReason = "season_rating" | "episode_rating" | "no_tmdb_id" | "list_truncated";
 
 export type SkippedItem = { reason: SkipReason; title: string };
 

@@ -196,6 +196,17 @@ play for the title. Values the import filled into an existing entry stay.
 The stored items are capped at 1.9 MB, under the D1 2 MB value limit; that is
 about 15,000 plays.
 
+TMDB connects through its v4 user approval
+([`src/services/import-tmdb.ts`](../src/services/import-tmdb.ts)). The connect
+route returns TMDB's approval URL and a request token; the client keeps the
+token across the approval page and posts it to the scan route. The token grants
+nothing without the server's read token. The scan exchanges it for a user access
+token, reads the account's rated, watchlist and favorite lists, revokes the
+access token, and stages the result. No user token is stored. TMDB keeps no
+watch history, so a TMDB import holds ratings and lists only. The scan runs in
+one request and reads at most 40 list pages, within the free plan's 50
+subrequests; a list it cut short is reported as skipped.
+
 ## Queues, crons, and views
 
 Queues are `defineQueue<T>` modules under `queues/`. Void's `maxRetries` default
