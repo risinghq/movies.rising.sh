@@ -4,7 +4,7 @@ import { requireAuth } from "void/auth";
 import { pageHead } from "@/shared/head";
 import { safeNextPath } from "@/shared/next-path";
 import { suggestUsername } from "@/shared/types/identity";
-import { getUserContext } from "@/domain/user";
+import { userContext } from "@/domain/user";
 
 export type Props = InferProps<typeof loader>;
 
@@ -13,7 +13,7 @@ export type Props = InferProps<typeof loader>;
 export const loader = defineHandler(async (c) => {
   const user = requireAuth(c, { throwRedirect: "/login" });
   const next = safeNextPath(c.req.query("next"));
-  const { username } = await getUserContext(user.id);
+  const { username } = userContext(user);
   if (username) return c.redirect(next);
   return { suggestion: suggestUsername(user.name || user.email), next };
 });

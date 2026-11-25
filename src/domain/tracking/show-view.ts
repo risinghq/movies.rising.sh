@@ -20,12 +20,15 @@ export async function buildShowView(
   userId: string | null,
   media: MediaRecord,
 ): Promise<ShowViewDto> {
-  const seasons = await listSeasonSummaries(media.id);
+  const [seasons, episodes] = await Promise.all([
+    listSeasonSummaries(media.id),
+    userId ? loadShowEpisodes(userId, media.id) : null,
+  ]);
   let watchedKeys: string[] = [];
   let progress = EMPTY_PROGRESS;
 
-  if (userId) {
-    const { watched, aired, provisionalCount } = await loadShowEpisodes(userId, media.id);
+  if (episodes) {
+    const { watched, aired, provisionalCount } = episodes;
     const derived = deriveShowProgress(watched, aired, provisionalCount);
     watchedKeys = resolveWatchedEpisodes(watched, aired, provisionalCount).map((episode) =>
       episodeKey(episode.seasonNumber, episode.episodeNumber),
