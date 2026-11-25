@@ -54,7 +54,8 @@ async function submit() {
 </script>
 
 <template>
-  <main class="container flex items-center justify-center min-h-[60vh] py-8 sm:py-12">
+  <!-- Top-aligned: sign up adds fields, and the tabs must not move. -->
+  <main class="container flex justify-center py-8 sm:py-12">
     <ForgotPasswordForm v-if="mode === 'forgot'" class="w-full max-w-sm" @back="mode = 'signin'" />
 
     <div v-else class="w-full max-w-sm flex flex-col gap-6">

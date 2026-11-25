@@ -100,8 +100,10 @@ export default defineConfig({
     },
   },
   shortcuts: [
-    ["container", "max-w-6xl mx-auto px-4 sm:px-6"],
-    ["container-sm", "max-w-5xl mx-auto px-4 sm:px-6"],
+    // `w-full`: the layout wraps pages in a flex column, where auto margins
+    // alone shrink a container to its content.
+    ["container", "w-full max-w-6xl mx-auto px-4 sm:px-6"],
+    ["container-sm", "w-full max-w-5xl mx-auto px-4 sm:px-6"],
     ["flex-split", "flex items-center justify-between"],
     ["focus-ring", "outline-none focus-visible:(ring-2 ring-fg/50 ring-offset-2)"],
     ["link-subtle", "text-fg-muted hover:text-fg transition-colors duration-200 focus-ring"],
