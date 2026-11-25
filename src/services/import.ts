@@ -152,9 +152,11 @@ export async function undoImport(
 ): Promise<Result<void, ImportError>> {
   const row = await findUserImport(userId, importId);
   if (!row) return err({ kind: "not_found" });
-  if (row.state !== "done") return err({ kind: "wrong_state" });
+  // A failed import may have written some batches before it gave up, so it
+  // can be undone like a finished one.
+  if (row.state !== "done" && row.state !== "failed") return err({ kind: "wrong_state" });
   await runBatch(undoImportWrites(userId, importId));
-  await moveImport(importId, "done", "undone");
+  await moveImport(importId, row.state, "undone");
   return ok(undefined);
 }
 
