@@ -18,7 +18,13 @@ export async function fetchSeasonEpisodes(
   tmdbId: number,
   seasonNumber: number,
 ): Promise<EpisodeInput[]> {
-  const raw = await tmdbFetch<unknown>(`/tv/${tmdbId}/season/${seasonNumber}`);
+  return parseSeasonEpisodes(
+    await tmdbFetch<unknown>(`/tv/${tmdbId}/season/${seasonNumber}`),
+    seasonNumber,
+  );
+}
+
+export function parseSeasonEpisodes(raw: unknown, seasonNumber: number): EpisodeInput[] {
   const season = parse(SeasonDetail, raw);
   return season.episodes.map((episode) => ({
     seasonNumber,

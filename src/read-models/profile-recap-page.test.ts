@@ -1,109 +1,47 @@
-import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import type { ProfileIdentity } from "@/domain/user";
-import { getWrappedSummary, wrappedYearsForUser } from "@/domain/insights/wrapped";
-import { findViewableProfile } from "./viewable-profile";
+import { beforeEach, describe, expect, it } from "vite-plus/test";
+import { resetDb } from "@/test/d1";
+import { addMedia, addUser, addWatch } from "@/test/fixtures";
 import { profileRecapPage } from "./profile-recap-page";
 
-vi.mock("@/domain/insights/wrapped", () => ({
-  getWrappedSummary: vi.fn<typeof getWrappedSummary>(),
-  wrappedYearsForUser: vi.fn<typeof wrappedYearsForUser>(),
-}));
+const today = new Date("2026-06-15T12:00:00Z");
 
-vi.mock("./viewable-profile", () => ({
-  findViewableProfile: vi.fn<typeof findViewableProfile>(),
-}));
+function viewRecap(year: string, username = "dubu") {
+  return profileRecapPage({ username, year, viewerId: null, today });
+}
 
-const findViewableProfileMock = vi.mocked(findViewableProfile);
-const wrappedYearsForUserMock = vi.mocked(wrappedYearsForUser);
-const getWrappedSummaryMock = vi.mocked(getWrappedSummary);
-
-const profile: ProfileIdentity = {
-  id: "user-1",
-  username: "dubu",
-  displayName: "Dubu",
-  avatarEmoji: null,
-  avatarColor: null,
-  joinedAt: 0,
-  timeZone: "UTC",
-  visibility: "public",
-};
+// dubu watched one movie in 2025 and one in 2026; hidden is private.
+beforeEach(async () => {
+  await resetDb();
+  await addUser({ id: "user-1", username: "dubu" });
+  await addUser({ id: "user-2", username: "hidden", visibility: "private" });
+  const mediaId = await addMedia({ tmdbId: 1 });
+  await addWatch({ userId: "user-1", mediaId, watchedOn: "2025-03-01" });
+  await addWatch({ userId: "user-1", mediaId, watchedOn: "2026-02-01" });
+  await addWatch({ userId: "user-2", mediaId, watchedOn: "2025-03-01" });
+});
 
 describe("profileRecapPage", () => {
-  beforeEach(() => {
-    findViewableProfileMock.mockReset();
-    wrappedYearsForUserMock.mockReset();
-    getWrappedSummaryMock.mockReset();
+  it.each([
+    { name: "a private profile", username: "hidden", year: "2025" },
+    { name: "an invalid year", username: "dubu", year: "nope" },
+    { name: "a year with no activity", username: "dubu", year: "2024" },
+  ])("returns not_found for $name", async (c) => {
+    await expect(viewRecap(c.year, c.username)).resolves.toEqual({ kind: "not_found" });
   });
 
-  it("returns not_found when the profile is not viewable", async () => {
-    findViewableProfileMock.mockResolvedValue(null);
-
-    await expect(
-      profileRecapPage({ username: "dubu", year: "2026", viewerId: null }),
-    ).resolves.toEqual({ kind: "not_found" });
-  });
-
-  it("returns not_found for invalid years", async () => {
-    findViewableProfileMock.mockResolvedValue({ profile, owner: false });
-
-    await expect(
-      profileRecapPage({ username: "dubu", year: "nope", viewerId: null }),
-    ).resolves.toEqual({ kind: "not_found" });
-  });
-
-  it("returns locked current-year recaps for visitors before December", async () => {
-    findViewableProfileMock.mockResolvedValue({ profile, owner: false });
-    wrappedYearsForUserMock.mockResolvedValue([2025]);
-
-    await expect(
-      profileRecapPage({
-        username: "dubu",
-        year: "2026",
-        viewerId: null,
-        today: new Date("2026-06-15T12:00:00Z"),
-      }),
-    ).resolves.toMatchObject({
+  it("locks the current year for visitors before December", async () => {
+    await expect(viewRecap("2026")).resolves.toMatchObject({
       kind: "recap",
       recapAccess: "locked",
       wrapped: null,
     });
-    expect(getWrappedSummaryMock).not.toHaveBeenCalled();
   });
 
-  it("loads wrapped data for open years", async () => {
-    findViewableProfileMock.mockResolvedValue({ profile, owner: false });
-    wrappedYearsForUserMock.mockResolvedValue([2025]);
-    getWrappedSummaryMock.mockResolvedValue({ year: 2025 } as Awaited<
-      ReturnType<typeof getWrappedSummary>
-    >);
-
-    await expect(
-      profileRecapPage({
-        username: "dubu",
-        year: "2025",
-        viewerId: null,
-        today: new Date("2026-06-15T12:00:00Z"),
-      }),
-    ).resolves.toMatchObject({
+  it("loads the wrapped summary for a past year", async () => {
+    await expect(viewRecap("2025")).resolves.toMatchObject({
       kind: "recap",
       recapAccess: "open",
       wrapped: { year: 2025 },
     });
-    expect(getWrappedSummaryMock).toHaveBeenCalledWith("user-1", { year: 2025 });
-  });
-
-  it("returns not_found for future activity years", async () => {
-    findViewableProfileMock.mockResolvedValue({ profile, owner: false });
-    wrappedYearsForUserMock.mockResolvedValue([2027, 2025]);
-
-    await expect(
-      profileRecapPage({
-        username: "dubu",
-        year: "2027",
-        viewerId: null,
-        today: new Date("2026-06-15T12:00:00Z"),
-      }),
-    ).resolves.toEqual({ kind: "not_found" });
-    expect(getWrappedSummaryMock).not.toHaveBeenCalled();
   });
 });

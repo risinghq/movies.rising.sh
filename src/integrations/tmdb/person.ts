@@ -58,9 +58,14 @@ function byDateDesc(a: { date: string | null }, b: { date: string | null }) {
 }
 
 export async function fetchPersonDetail(tmdbId: number): Promise<PersonDetail> {
-  const raw = await tmdbFetch<unknown>(`/person/${tmdbId}`, {
-    append_to_response: "combined_credits,external_ids",
-  });
+  return parsePersonDetail(
+    await tmdbFetch<unknown>(`/person/${tmdbId}`, {
+      append_to_response: "combined_credits,external_ids",
+    }),
+  );
+}
+
+export function parsePersonDetail(raw: unknown): PersonDetail {
   const person = parse(Person, raw);
 
   const acting: FilmographyEntry[] = person.combined_credits.cast

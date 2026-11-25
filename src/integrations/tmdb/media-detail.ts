@@ -191,9 +191,14 @@ function pickTitles(
 }
 
 export async function fetchMovieDetail(tmdbId: number): Promise<MediaDetail> {
-  const raw = await tmdbFetch<unknown>(`/movie/${tmdbId}`, {
-    append_to_response: "credits,translations,release_dates",
-  });
+  return parseMovieDetail(
+    await tmdbFetch<unknown>(`/movie/${tmdbId}`, {
+      append_to_response: "credits,translations,release_dates",
+    }),
+  );
+}
+
+export function parseMovieDetail(raw: unknown): MediaDetail {
   const movie = parse(MovieDetail, raw);
 
   const cast: CastInput[] = movie.credits.cast.map((c) => ({
@@ -250,9 +255,14 @@ export async function fetchMovieDetail(tmdbId: number): Promise<MediaDetail> {
 }
 
 export async function fetchShowDetail(tmdbId: number): Promise<MediaDetail> {
-  const raw = await tmdbFetch<unknown>(`/tv/${tmdbId}`, {
-    append_to_response: "aggregate_credits,translations,content_ratings,external_ids",
-  });
+  return parseShowDetail(
+    await tmdbFetch<unknown>(`/tv/${tmdbId}`, {
+      append_to_response: "aggregate_credits,translations,content_ratings,external_ids",
+    }),
+  );
+}
+
+export function parseShowDetail(raw: unknown): MediaDetail {
   const show = parse(TvDetail, raw);
 
   // People stubs derive from capped cast rows, so dropped guests are not persisted.

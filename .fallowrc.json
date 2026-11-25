@@ -14,7 +14,8 @@
     "db/seed.ts",
     "vite.config.ts",
     "uno.config.ts",
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "src/test/**/*.ts"
   ],
   "ignorePatterns": [".void/**", "**/*.d.ts"],
   "ignoreDependencies": [

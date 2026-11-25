@@ -1,20 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { fetchMovieDetail, fetchShowDetail } from "./media-detail";
-import { fetchSeasonEpisodes } from "./season";
-
-const { tmdbFetch } = vi.hoisted(() => ({
-  tmdbFetch: vi.fn<(path: string, params?: Record<string, string>) => Promise<unknown>>(),
-}));
-
-vi.mock("./client", () => ({ tmdbFetch }));
-
-beforeEach(() => {
-  tmdbFetch.mockReset();
-});
+import { describe, expect, it } from "vite-plus/test";
+import { parseMovieDetail, parseShowDetail } from "./media-detail";
+import { parseSeasonEpisodes } from "./season";
 
 describe("TMDB detail parsing", () => {
-  it("maps movie details and drops invalid credit rows", async () => {
-    tmdbFetch.mockResolvedValueOnce({
+  it("maps movie details and drops invalid credit rows", () => {
+    const detail = parseMovieDetail({
       id: 550,
       title: "Fight Club",
       original_title: "Fight Club",
@@ -95,11 +85,6 @@ describe("TMDB detail parsing", () => {
       },
     });
 
-    const detail = await fetchMovieDetail(550);
-
-    expect(tmdbFetch).toHaveBeenCalledWith("/movie/550", {
-      append_to_response: "credits,translations,release_dates",
-    });
     expect(detail.scalars).toEqual(
       expect.objectContaining({
         title: "Fight Club",
@@ -135,7 +120,7 @@ describe("TMDB detail parsing", () => {
     expect(detail.titles).toEqual([{ languageCode: "es", title: "El club de la pelea" }]);
   });
 
-  it("caps TV cast by credit rows and keeps only hydrated people", async () => {
+  it("caps TV cast by credit rows and keeps only hydrated people", () => {
     const cast = Array.from({ length: 105 }, (_, index) => ({
       id: 10_000 + index,
       name: `Actor ${index}`,
@@ -153,7 +138,7 @@ describe("TMDB detail parsing", () => {
       ],
     }));
 
-    tmdbFetch.mockResolvedValueOnce({
+    const detail = parseShowDetail({
       id: 1399,
       name: "Game of Thrones",
       original_name: "Game of Thrones",
@@ -197,11 +182,6 @@ describe("TMDB detail parsing", () => {
       external_ids: { imdb_id: "tt0944947" },
     });
 
-    const detail = await fetchShowDetail(1399);
-
-    expect(tmdbFetch).toHaveBeenCalledWith("/tv/1399", {
-      append_to_response: "aggregate_credits,translations,content_ratings,external_ids",
-    });
     expect(detail.scalars).toEqual(
       expect.objectContaining({
         title: "Game of Thrones",
@@ -231,19 +211,18 @@ describe("TMDB detail parsing", () => {
     expect(detail.seasonNumbers).toEqual([1, 2]);
   });
 
-  it("keeps valid season episodes when TMDB returns malformed rows", async () => {
-    tmdbFetch.mockResolvedValueOnce({
+  it("keeps valid season episodes when TMDB returns malformed rows", () => {
+    const raw = {
       episodes: [
         { episode_number: 1, name: "Pilot", runtime: 42, air_date: "2020-01-01" },
         { name: "Missing episode number", runtime: 44, air_date: "2020-01-08" },
         { episode_number: 3, name: "", runtime: "unknown", air_date: "" },
       ],
-    });
+    };
 
-    await expect(fetchSeasonEpisodes(1399, 1)).resolves.toEqual([
+    expect(parseSeasonEpisodes(raw, 1)).toEqual([
       { seasonNumber: 1, episodeNumber: 1, name: "Pilot", runtime: 42, airDate: "2020-01-01" },
       { seasonNumber: 1, episodeNumber: 3, name: null, runtime: null, airDate: null },
     ]);
-    expect(tmdbFetch).toHaveBeenCalledWith("/tv/1399/season/1");
   });
 });

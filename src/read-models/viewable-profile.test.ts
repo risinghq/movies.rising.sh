@@ -1,13 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { beforeEach, describe, expect, it } from "vite-plus/test";
+import { resetDb } from "@/test/d1";
+import { addUser } from "@/test/fixtures";
 import type { ProfileIdentity } from "@/domain/user";
-import { findProfileByUsername } from "@/domain/user";
-import { findViewableProfile } from "./viewable-profile";
-
-vi.mock("@/domain/user", () => ({
-  findProfileByUsername: vi.fn<typeof findProfileByUsername>(),
-}));
-
-const findProfileByUsernameMock = vi.mocked(findProfileByUsername);
+import { findViewableProfile, viewerRelation } from "./viewable-profile";
 
 function profile(visibility: ProfileIdentity["visibility"]): ProfileIdentity {
   return {
@@ -22,30 +17,35 @@ function profile(visibility: ProfileIdentity["visibility"]): ProfileIdentity {
   };
 }
 
-describe("findViewableProfile", () => {
-  beforeEach(() => {
-    findProfileByUsernameMock.mockReset();
-  });
-
-  it("does not look up a missing username", async () => {
-    await expect(findViewableProfile(undefined, null)).resolves.toBeNull();
-    expect(findProfileByUsernameMock).not.toHaveBeenCalled();
-  });
-
+describe("viewerRelation", () => {
   it.each([
     { visibility: "public", viewerId: null, owner: false },
     { visibility: "private", viewerId: "user-1", owner: true },
     { visibility: "private", viewerId: "someone-else", owner: null },
     { visibility: "private", viewerId: null, owner: null },
-  ] as const)(
-    "$visibility profile for viewer $viewerId",
-    async ({ visibility, viewerId, owner }) => {
-      const found = profile(visibility);
-      findProfileByUsernameMock.mockResolvedValue(found);
+  ] as const)("$visibility profile for viewer $viewerId", ({ visibility, viewerId, owner }) => {
+    const found = profile(visibility);
 
-      await expect(findViewableProfile("dubu", viewerId)).resolves.toEqual(
-        owner === null ? null : { profile: found, owner },
-      );
-    },
-  );
+    expect(viewerRelation(found, viewerId)).toEqual(
+      owner === null ? null : { profile: found, owner },
+    );
+  });
+});
+
+describe("findViewableProfile", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await addUser({ id: "user-1", username: "dubu" });
+  });
+
+  it("finds a profile by username in any case", async () => {
+    await expect(findViewableProfile("Dubu", "user-1")).resolves.toMatchObject({
+      profile: { id: "user-1", username: "dubu" },
+      owner: true,
+    });
+  });
+
+  it.each([undefined, "nobody"])("returns null for username %s", async (username) => {
+    await expect(findViewableProfile(username, null)).resolves.toBeNull();
+  });
 });
