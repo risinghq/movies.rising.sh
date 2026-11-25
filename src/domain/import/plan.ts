@@ -168,13 +168,15 @@ function planPlays(
     const mediaId = toMediaId(item.media.mediaType, item.media.tmdbId);
     const season = item.episode?.seasonNumber ?? null;
     const episode = item.episode?.episodeNumber ?? null;
-    const key = playKey(mediaId, season, episode, item.watchedAt);
+    const watchedAt =
+      item.watchedAt ?? (item.watchedOn ? localNoon(item.watchedOn, context.timeZone) : null);
+    const key = playKey(mediaId, season, episode, watchedAt);
     if (seen.has(key)) {
       counts.duplicatePlays += 1;
       continue;
     }
     seen.add(key);
-    const instant = item.watchedAt === null ? null : instantFor(item.watchedAt, context.timeZone);
+    const instant = watchedAt === null ? null : instantFor(watchedAt, context.timeZone);
     plays.push({
       id: crypto.randomUUID(),
       userId: context.userId,
@@ -192,6 +194,14 @@ function planPlays(
     if (!instant) counts.undatedPlays += 1;
   }
   return plays;
+}
+
+// A day-only play is placed at noon in the user's zone: the day stays the
+// same in every zone, and a second import of the file yields the same instant,
+// so its plays read as duplicates.
+export function localNoon(day: string, timeZone: string | null): number {
+  const noonUtc = Date.parse(`${day}T12:00:00Z`);
+  return noonUtc - instantFor(noonUtc, timeZone).utcOffsetMinutes * 60_000;
 }
 
 // Returns the entry to upsert, or null when the import changes nothing.

@@ -15,11 +15,23 @@ export async function tmdbFetch<T>(path: string, params: Record<string, string> 
   url.searchParams.set("language", "en-US");
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
 
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-  });
+  const headers = { Authorization: `Bearer ${token}`, Accept: "application/json" };
+  let response = await fetch(url, { headers });
+  for (let retry = 0; response.status === 429 && retry < MAX_RATE_RETRIES; retry++) {
+    await new Promise((resolve) => setTimeout(resolve, retryDelay(response)));
+    response = await fetch(url, { headers });
+  }
   if (!response.ok) throw new Error(`TMDB ${path} → ${response.status}`);
   return response.json() as Promise<T>;
+}
+
+// TMDB answers bursts above about 40 requests a second with 429 and a
+// Retry-After in seconds. An import matching thousands of titles reaches it.
+const MAX_RATE_RETRIES = 3;
+
+function retryDelay(response: Response): number {
+  const seconds = Number(response.headers.get("retry-after"));
+  return Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds, 10) * 1000 : 1000;
 }
 
 const TMDB_V4_BASE = "https://api.themoviedb.org/4";

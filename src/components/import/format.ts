@@ -20,7 +20,9 @@ export function formatDay(day: string): string {
 const SKIPPED: Record<string, [string, string]> = {
   episode_rating: ["episode rating", "episode ratings"],
   season_rating: ["season rating", "season ratings"],
+  episode_listed: ["listed episode", "listed episodes"],
   no_tmdb_id: ["title not on TMDB", "titles not on TMDB"],
+  no_match: ["title not found on TMDB", "titles not found on TMDB"],
   list_truncated: ["list cut short", "lists cut short"],
 };
 
@@ -29,7 +31,12 @@ export function skippedLabel(reason: string, n: number): string {
   return formatCount(n, one, many);
 }
 
-const SOURCE_NAMES: Record<string, string> = { trakt: "Trakt", tmdb: "TMDB" };
+const SOURCE_NAMES: Record<string, string> = {
+  trakt: "Trakt",
+  tmdb: "TMDB",
+  letterboxd: "Letterboxd",
+  imdb: "IMDb",
+};
 
 export function sourceName(source: string): string {
   return SOURCE_NAMES[source] ?? source;

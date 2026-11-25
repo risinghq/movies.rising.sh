@@ -9,8 +9,11 @@ export type ImportPlay = {
   kind: "play";
   media: ImportMediaRef;
   episode: EpisodeRef | null;
-  // Epoch ms. Null when the date is unknown (see batches.ts).
+  // Epoch ms. Null when the time is unknown (see batches.ts).
   watchedAt: number | null;
+  // The local day, YYYY-MM-DD, when the source gives a day but no time, as a
+  // Letterboxd diary does. watchedAt is then null.
+  watchedOn?: string;
 };
 
 export type ImportRating = {
@@ -28,7 +31,13 @@ export type ImportDropped = { kind: "dropped"; media: ImportMediaRef };
 
 export type ImportItem = ImportPlay | ImportRating | ImportPlanned | ImportFavorite | ImportDropped;
 
-export type SkipReason = "season_rating" | "episode_rating" | "no_tmdb_id" | "list_truncated";
+export type SkipReason =
+  | "season_rating"
+  | "episode_rating"
+  | "episode_listed"
+  | "no_tmdb_id"
+  | "no_match"
+  | "list_truncated";
 
 export type SkippedItem = { reason: SkipReason; title: string };
 

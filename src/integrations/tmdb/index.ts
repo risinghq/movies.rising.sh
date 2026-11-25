@@ -2,6 +2,7 @@ export { tmdbToken } from "./client";
 export { searchTmdbMedia, fetchTmdbShowTotals, type TmdbMediaResult } from "./search";
 export { fetchMovieDetail, fetchShowDetail } from "./media-detail";
 export { fetchPersonDetail } from "./person";
+export { findTmdbByImdbId, searchTmdbTitle, type TmdbMatch } from "./find";
 export { fetchSeasonEpisodes } from "./season";
 export {
   TMDB_APPROVE_URL,
