@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { watch, onUnmounted } from "vue";
+import { onUnmounted, watch } from "vue";
 import { Link, useRouter } from "@void/vue";
 import { auth } from "void/client";
+import ClientTeleport from "@/components/ui/ClientTeleport.vue";
 
 const isOpen = defineModel<boolean>("open", { default: false });
 const props = defineProps<{
@@ -39,7 +40,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Teleport to="body">
+  <ClientTeleport to="body">
     <Transition
       enter-active-class="transition-opacity duration-200"
       leave-active-class="transition-opacity duration-150"
@@ -187,5 +188,5 @@ onUnmounted(() => {
         </Transition>
       </div>
     </Transition>
-  </Teleport>
+  </ClientTeleport>
 </template>
