@@ -1,5 +1,6 @@
-import { defineHandler } from "void";
+import { defineHandler, defineHead } from "void";
 import type { InferProps } from "void";
+import { mediaHead } from "@/shared/head";
 import { getUser } from "void/auth";
 import { isMediaFavorited } from "@/domain/tracking/favorites";
 import { findEntry, type LibraryEntryRecord } from "@/domain/tracking/library-entries";
@@ -81,3 +82,5 @@ export const loader = defineHandler(async (c) => {
     ratingSystem,
   };
 });
+
+export const head = defineHead<Props>((_c, props) => mediaHead(props.media));

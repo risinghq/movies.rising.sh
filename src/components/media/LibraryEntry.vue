@@ -5,7 +5,7 @@ import MediaLink from "./MediaLink.vue";
 import type { MediaLayout } from "@/composables/useLayoutPreference";
 import { LIBRARY_STATUSES, statusBg, type LibraryStatus } from "@/shared/library-status";
 import type { RatingSystem } from "@/domain/rating";
-import { tmdbImage } from "@/components/tmdb-image";
+import { tmdbImage } from "@/shared/tmdb-image";
 import { useTracking, type EntryUpdate } from "@/composables/useTracking";
 
 const props = defineProps<{

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from "@void/vue";
-import { tmdbImage } from "@/components/tmdb-image";
+import { tmdbImage } from "@/shared/tmdb-image";
 
 defineProps<{
   name: string;

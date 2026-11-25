@@ -3,7 +3,7 @@ import { computed } from "vue";
 import { useResultAction } from "@/composables/useResultAction";
 import MediaLink from "./MediaLink.vue";
 import type { MediaRef } from "@/shared/tracking";
-import { tmdbImage } from "@/components/tmdb-image";
+import { tmdbImage } from "@/shared/tmdb-image";
 
 const props = defineProps<{
   title: string;

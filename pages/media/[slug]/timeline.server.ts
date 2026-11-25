@@ -1,5 +1,6 @@
-import { defineHandler } from "void";
+import { defineHandler, defineHead } from "void";
 import type { InferProps } from "void";
+import { mediaHead } from "@/shared/head";
 import { getMediaStats } from "@/domain/insights/title-stats";
 import { getTimelineView } from "@/domain/tracking/media-timeline";
 import { loadMedia } from "@/services/media-hydration";
@@ -16,3 +17,5 @@ export const loader = defineHandler(async (c) => {
   ]);
   return { media: item, timeline, stats };
 });
+
+export const head = defineHead<Props>((_c, props) => mediaHead(props.media, "community"));

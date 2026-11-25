@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { tmdbImage } from "@/components/tmdb-image";
+import { tmdbImage } from "@/shared/tmdb-image";
 
 defineProps<{
   title: string;

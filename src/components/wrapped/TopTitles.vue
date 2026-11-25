@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { WrappedTitleStat } from "@/domain/insights/wrapped";
 import { formatScore, type RatingSystem } from "@/domain/rating";
-import { tmdbImage } from "@/components/tmdb-image";
+import { tmdbImage } from "@/shared/tmdb-image";
 import { formatMetric } from "./format";
 
 defineProps<{ titles: WrappedTitleStat[]; ratingSystem: RatingSystem }>();

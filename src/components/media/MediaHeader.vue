@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { Link } from "@void/vue";
 import type { MediaSummary } from "@/shared/catalog";
 import { yearOf } from "@/shared/format-media";
-import { tmdbImage } from "@/components/tmdb-image";
+import { tmdbImage } from "@/shared/tmdb-image";
 
 const props = defineProps<{
   media: MediaSummary;

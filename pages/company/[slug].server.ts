@@ -1,5 +1,6 @@
-import { defineHandler } from "void";
+import { defineHandler, defineHead } from "void";
 import type { InferProps } from "void";
+import { pageHead } from "@/shared/head";
 import { getUser } from "void/auth";
 import { logger } from "void/log";
 import { findCompany } from "@/domain/catalog/metadata";
@@ -33,3 +34,13 @@ export const loader = defineHandler(async (c) => {
 
   return { company, filter, titles, hasMore, failed, signedIn: Boolean(user) };
 });
+
+export const head = defineHead<Props>((_c, { company }) =>
+  pageHead({
+    title: company.name,
+    description:
+      company.kind === "network"
+        ? `Shows on ${company.name}, with what you have tracked.`
+        : `Films and shows from ${company.name}, with what you have tracked.`,
+  }),
+);

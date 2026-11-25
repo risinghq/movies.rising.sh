@@ -1,5 +1,7 @@
-import { defineHandler } from "void";
+import { defineHandler, defineHead } from "void";
 import type { InferProps } from "void";
+import { pageHead } from "@/shared/head";
+import { tmdbImage } from "@/shared/tmdb-image";
 import { getUser } from "void/auth";
 import { findPersonBySlug } from "@/domain/catalog/people";
 import { findMediaByTmdbIds } from "@/domain/catalog/media";
@@ -70,3 +72,12 @@ export const loader = defineHandler(async (c) => {
     user: user ?? null,
   };
 });
+
+export const head = defineHead<Props>((_c, { person }) =>
+  pageHead({
+    title: person.name,
+    description: person.biography,
+    image: person.profilePath ? tmdbImage(person.profilePath, "w500") : null,
+    type: "profile",
+  }),
+);
