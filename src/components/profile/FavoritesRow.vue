@@ -23,7 +23,7 @@ const toggleClass = computed(() =>
       <button
         type="button"
         :class="toggleClass"
-        class="min-h-11 sm:min-h-8 text-[0.6875rem] font-mono link-subtle rounded"
+        class="min-h-11 sm:min-h-8 text-[0.6875rem] font-mono quiet-link rounded"
         :aria-expanded="expanded"
         :aria-controls="gridId"
         @click="expanded = !expanded"

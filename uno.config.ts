@@ -106,7 +106,9 @@ export default defineConfig({
     ["container-sm", "w-full max-w-5xl mx-auto px-4 sm:px-6"],
     ["flex-split", "flex items-center justify-between"],
     ["focus-ring", "outline-none focus-visible:(ring-2 ring-fg/50 ring-offset-2)"],
-    ["link-subtle", "text-fg-muted hover:text-fg transition-colors duration-200 focus-ring"],
+    // Not `link-*`: UnoCSS reads `-` as a variant separator, so `link-subtle`
+    // parses as the :link variant of a missing `subtle` utility and emits nothing.
+    ["quiet-link", "text-fg-muted hover:text-fg transition-colors duration-200 focus-ring"],
     [
       "title-action",
       "inline-flex h-8.5 items-center justify-center gap-1.5 rounded-md border border-border bg-transparent px-3 font-mono text-[0.8125rem] text-fg no-underline transition-colors hover:border-border-hover disabled:opacity-60 focus-ring max-sm:(size-11 px-0)",

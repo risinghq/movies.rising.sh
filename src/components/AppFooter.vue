@@ -23,8 +23,8 @@ const modalRef = ref<InstanceType<typeof Modal> | null>(null);
         <span><kbd class="font-mono">⌘K</kbd> palette</span>
       </button>
       <nav aria-label="site" class="flex items-center gap-3 font-mono">
-        <Link class="link-subtle rounded" href="/about">about</Link>
-        <a class="link-subtle rounded" href="https://rising.sh/privacy/#movies">privacy</a>
+        <Link class="quiet-link rounded" href="/about">about</Link>
+        <a class="quiet-link rounded" href="https://rising.sh/privacy/#movies">privacy</a>
       </nav>
     </div>
 
