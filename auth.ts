@@ -3,6 +3,7 @@
 
 import { defineAuth } from "void/auth";
 import { username } from "better-auth/plugins";
+import { passkey } from "@better-auth/passkey";
 import { env } from "void/env";
 
 const USERNAME_MIN = 3;
@@ -45,6 +46,9 @@ export default defineAuth(({ defaults }) => ({
       maxUsernameLength: USERNAME_MAX,
       usernameValidator: (value) => isValidUsername(value),
     }),
+    // Void sets `baseURL` to each request's origin, so the relying-party ID and
+    // origin default to the serving host: localhost in dev, movies.rising.sh live.
+    passkey({ rpName: "tracker" }),
   ],
   user: {
     additionalFields: {

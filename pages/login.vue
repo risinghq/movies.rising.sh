@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { auth } from "void/client";
 import { useRouter } from "@void/vue";
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm.vue";
+import PasskeySignIn from "@/components/auth/PasskeySignIn.vue";
 
 const router = useRouter();
 const email = ref("");
@@ -127,14 +128,16 @@ async function submit() {
         </button>
       </form>
 
-      <button
-        v-if="mode === 'signin'"
-        type="button"
-        class="self-center text-xs font-mono text-fg-muted hover:text-fg transition-colors"
-        @click="mode = 'forgot'"
-      >
-        forgot password?
-      </button>
+      <template v-if="mode === 'signin'">
+        <PasskeySignIn />
+        <button
+          type="button"
+          class="self-center text-xs font-mono text-fg-muted hover:text-fg transition-colors"
+          @click="mode = 'forgot'"
+        >
+          forgot password?
+        </button>
+      </template>
     </div>
   </main>
 </template>
