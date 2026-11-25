@@ -2,12 +2,14 @@
 import { auth } from "@/auth-client";
 import { useRouter } from "@void/vue";
 import { useSaveAction } from "@/composables/useSaveAction";
+import { withPasskeyMessage } from "@/shared/passkey-errors";
 
 const router = useRouter();
 const signIn = useSaveAction();
 
 async function submit() {
-  if (await signIn.run(() => auth.signIn.passkey())) await router.visit("/");
+  if (await signIn.run(async () => withPasskeyMessage(await auth.signIn.passkey())))
+    await router.visit("/");
 }
 </script>
 
