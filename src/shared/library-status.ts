@@ -27,4 +27,3 @@ export function resolveStatus(filed: LibraryStatus, progress: StatusProgress): L
 }
 
 export const statusBg = (status: LibraryStatus): string => `bg-status-${status}`;
-export const statusBadge = (status: LibraryStatus): string => `badge-${status}`;

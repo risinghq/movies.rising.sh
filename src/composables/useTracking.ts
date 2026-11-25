@@ -80,13 +80,7 @@ export function useTracking(options: Options) {
     });
   });
 
-  const progressText = computed(() => {
-    if (!entry.value || options.mediaType !== "show") return null;
-    if (episodeTotal.value !== null) {
-      return `${entry.value.watchedEpisodeCount} / ${episodeTotal.value} episodes`;
-    }
-    return `${entry.value.watchedEpisodeCount} episodes`;
-  });
+  const watchedCount = computed(() => entry.value?.watchedEpisodeCount ?? 0);
 
   const canLogEpisode = computed(() => {
     if (options.mediaType !== "show") return false;
@@ -234,7 +228,7 @@ export function useTracking(options: Options) {
     displayStatus,
     displayScore,
     scoreMax: max,
-    progressText,
+    watchedCount,
     canLogEpisode,
     setStatus,
     setScore,

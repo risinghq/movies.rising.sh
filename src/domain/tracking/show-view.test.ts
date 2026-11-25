@@ -41,7 +41,7 @@ describe("buildShowView", () => {
       { seasonNumber: 1, episodeCount: 2 },
       { seasonNumber: 2, episodeCount: 3 },
     ]);
-    expect(view.firstSeason).toEqual({ seasonNumber: 1, episodes: [episode(1, 1), episode(1, 2)] });
+    expect(view.openSeason).toEqual({ seasonNumber: 1, episodes: [episode(1, 1), episode(1, 2)] });
   });
 });
 

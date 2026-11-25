@@ -18,15 +18,6 @@ export function episodeSummary(
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
-export function votesText(voteCount: number | null | undefined): string | null {
-  return voteCount ? `${voteCount.toLocaleString()} votes` : null;
-}
-
-// TMDB scores are out of 10; the UI shows a five-point scale.
-export function scoreText(voteAverage: number | null | undefined): string | null {
-  return voteAverage ? `${(voteAverage / 2).toFixed(1)}/5` : null;
-}
-
 export function airedText(
   start: string | null | undefined,
   end: string | null | undefined,

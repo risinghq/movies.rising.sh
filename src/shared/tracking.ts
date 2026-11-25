@@ -8,6 +8,31 @@ export function episodeKey(seasonNumber: number, episodeNumber: number): string 
   return `${seasonNumber}:${episodeNumber}`;
 }
 
+export function seasonName(seasonNumber: number): string {
+  return seasonNumber === 0 ? "specials" : `season ${seasonNumber}`;
+}
+
+export function watchedBySeason(watchedKeys: readonly string[]): Map<number, number> {
+  const counts = new Map<number, number>();
+  for (const key of watchedKeys) {
+    const seasonNumber = Number(key.slice(0, key.indexOf(":")));
+    counts.set(seasonNumber, (counts.get(seasonNumber) ?? 0) + 1);
+  }
+  return counts;
+}
+
+// A show opens on the season the viewer is in: the first regular season with
+// an unwatched episode. Specials (season 0) open only when nothing else exists.
+export function openingSeason(
+  seasons: readonly SeasonSummary[],
+  watchedKeys: readonly string[],
+): number | null {
+  const counts = watchedBySeason(watchedKeys);
+  const regular = seasons.filter((s) => s.seasonNumber !== 0);
+  const current = regular.find((s) => (counts.get(s.seasonNumber) ?? 0) < s.episodeCount);
+  return (current ?? regular[0] ?? seasons[0])?.seasonNumber ?? null;
+}
+
 export type MediaSearchCandidate = {
   mediaType: "movie" | "show";
   tmdbId: number;
@@ -41,10 +66,10 @@ export type ShowProgressDto = {
 };
 
 // Long shows run past a thousand episodes, so the view carries the episodes of
-// the first season only. The client loads another season when it is opened.
+// the opening season only. The client loads another season when it is picked.
 export type ShowViewDto = {
   seasons: SeasonSummary[];
-  firstSeason: SeasonEpisodes | null;
+  openSeason: SeasonEpisodes | null;
   seasonCount: number | null;
   episodeCount: number | null;
   watchedKeys: string[];

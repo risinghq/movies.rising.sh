@@ -54,6 +54,7 @@ export default defineConfig({
         DEFAULT: "var(--accent)",
         fallback: "var(--accent-muted)",
       },
+      "logo-tile": "var(--logo-tile)",
       syntax: {
         fn: "var(--syntax-fn)",
         str: "var(--syntax-str)",
@@ -104,6 +105,14 @@ export default defineConfig({
     ["flex-split", "flex items-center justify-between"],
     ["focus-ring", "outline-none focus-visible:(ring-2 ring-fg/50 ring-offset-2)"],
     ["link-subtle", "text-fg-muted hover:text-fg transition-colors duration-200 focus-ring"],
+    [
+      "title-action",
+      "inline-flex h-8.5 items-center justify-center gap-1.5 rounded-md border border-border bg-transparent px-3 font-mono text-[0.8125rem] text-fg no-underline transition-colors hover:border-border-hover disabled:opacity-60 focus-ring max-sm:(size-11 px-0)",
+    ],
+    [
+      "box-action",
+      "flex h-11 items-center rounded-md border border-border bg-bg-subtle px-4 font-mono text-[0.8125rem] text-fg no-underline transition-colors hover:border-border-hover focus-ring sm:h-9",
+    ],
     ["badge-orange", "bg-badge-orange/10 text-badge-orange"],
     ["badge-yellow", "bg-badge-yellow/10 text-badge-yellow"],
     ["badge-green", "bg-badge-green/10 text-badge-green"],
@@ -114,11 +123,6 @@ export default defineConfig({
     ["badge-pink", "bg-badge-pink/10 text-badge-pink"],
     ["badge-subtle", "bg-bg-subtle text-fg-subtle"],
     ["badge-accent", "bg-accent/10 text-accent"],
-    ["badge-planned", "bg-status-planned/10 text-status-planned border-status-planned/20"],
-    ["badge-watching", "bg-status-watching/10 text-status-watching border-status-watching/20"],
-    ["badge-completed", "bg-status-completed/10 text-status-completed border-status-completed/20"],
-    ["badge-paused", "bg-status-paused/10 text-status-paused border-status-paused/20"],
-    ["badge-dropped", "bg-status-dropped/10 text-status-dropped border-status-dropped/20"],
   ],
   rules: [
     ["animate-fill-both", { "animation-fill-mode": "both" }],

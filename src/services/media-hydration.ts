@@ -23,6 +23,7 @@ import {
   mediaEpisodesWrite,
 } from "@/domain/catalog/episodes";
 import { runBatch, type Statement } from "@/db/kernel";
+import { cacheMediaBySlug } from "@/services/media-catalog";
 import {
   DETAILS_TTL_MS,
   EPISODES_TTL_MS,
@@ -119,9 +120,16 @@ async function hydrateMediaEpisodes(msg: EpisodeHydrationMessage): Promise<Hydra
 
 // Unknown slugs return null so callers can choose their not-found response.
 export async function loadMedia(slug: string): Promise<MediaRecord | null> {
-  const found = await findMediaBySlug(slug);
+  const found = (await findMediaBySlug(slug)) ?? (await cacheFromSlug(slug));
   if (!found) return null;
   return ensureMediaDetails(found);
+}
+
+async function cacheFromSlug(slug: string): Promise<MediaRecord | null> {
+  const mediaId = await cacheMediaBySlug(slug);
+  if (!mediaId) return null;
+  const cached = await findMedia(mediaId);
+  return cached.ok ? cached.value : null;
 }
 
 async function ensureMediaDetails(item: MediaRecord): Promise<MediaRecord> {
