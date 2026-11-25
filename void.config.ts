@@ -28,5 +28,8 @@ export default defineConfig({
     // `email.from` unset keeps Void's setup out of the deploy, which needs a
     // token scope the CI token lacks; the sender is passed per send instead.
     send_email: [{ name: "SEND_EMAIL" }],
+    // D1 lives in ENAM; a page makes several sequential queries, so running the
+    // Worker near the database beats running it near a distant visitor.
+    placement: { mode: "smart" },
   },
 });

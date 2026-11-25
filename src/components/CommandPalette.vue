@@ -3,6 +3,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import Modal from "@/components/ui/Modal.vue";
 import MediaResultRow from "@/components/media/MediaResultRow.vue";
 import { auth } from "void/client";
+import { Link, useRouter } from "@void/vue";
 import { useMediaSearch } from "@/composables/useMediaSearch";
 
 const props = defineProps<{
@@ -17,6 +18,7 @@ type Command = {
   action?: () => void | Promise<void>;
 };
 
+const router = useRouter();
 const isOpen = ref(false);
 const query = ref("");
 const modalRef = ref<InstanceType<typeof Modal> | null>(null);
@@ -104,24 +106,22 @@ function move(delta: number) {
   });
 }
 
+function go(href: string) {
+  close();
+  void router.visit(href);
+}
+
 function activate(item: Nav) {
   if (item.kind === "command") {
-    if (item.cmd.href) {
-      close();
-      window.location.href = item.cmd.href;
-    } else {
-      void runCommand(item.cmd);
-    }
+    if (item.cmd.href) go(item.cmd.href);
+    else void runCommand(item.cmd);
     return;
   }
   if (item.kind === "media") {
-    if (!item.slug) return;
-    close();
-    window.location.href = `/media/${item.slug}`;
+    if (item.slug) go(`/media/${item.slug}`);
     return;
   }
-  close();
-  window.location.href = item.href;
+  go(item.href);
 }
 
 let debounce: ReturnType<typeof setTimeout> | undefined;
@@ -249,7 +249,7 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
             no commands found
           </div>
           <template v-for="(cmd, index) in filteredCommands" :key="cmd.id">
-            <a
+            <Link
               v-if="cmd.href"
               :href="cmd.href"
               role="option"
@@ -267,7 +267,7 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
                 aria-hidden="true"
               />
               <span class="font-mono text-sm lowercase">{{ cmd.label }}</span>
-            </a>
+            </Link>
             <button
               v-else
               type="button"
@@ -331,7 +331,7 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
             />
           </div>
 
-          <a
+          <Link
             v-if="query.trim()"
             :href="`/search?q=${encodeURIComponent(query.trim())}`"
             :data-active="activeIndex === navItems.length - 1 ? 'true' : undefined"
@@ -347,7 +347,7 @@ onUnmounted(() => document.removeEventListener("keydown", handleKeydown));
             <span class="i-lucide:search w-4 h-4 shrink-0" aria-hidden="true" />
             <span class="font-mono text-sm">see all results for "{{ query.trim() }}"</span>
             <span class="i-lucide:arrow-right w-3.5 h-3.5 ml-auto shrink-0" aria-hidden="true" />
-          </a>
+          </Link>
         </template>
       </div>
 

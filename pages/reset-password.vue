@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { auth } from "void/client";
-import { useRouter } from "@void/vue";
+import { Link, useRouter } from "@void/vue";
 import type { Props } from "./reset-password.server";
 import { useSaveAction } from "@/composables/useSaveAction";
 
@@ -28,9 +28,9 @@ async function submit() {
         <p class="text-sm text-red-400 font-mono">
           This reset link is invalid or has expired. Request a new one from the sign-in page.
         </p>
-        <a href="/login" class="text-xs font-mono text-fg-muted hover:text-fg transition-colors">
+        <Link href="/login" class="text-xs font-mono text-fg-muted hover:text-fg transition-colors">
           back to sign in
-        </a>
+        </Link>
       </div>
 
       <form v-else class="flex flex-col gap-4" @submit.prevent="submit">

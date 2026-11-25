@@ -4,14 +4,16 @@ import "@fontsource-variable/geist";
 import "@fontsource-variable/geist-mono";
 import "virtual:uno.css";
 import "@/styles/app.css";
-import { useShared } from "@void/vue";
+import { useRouter, useShared } from "@void/vue";
 import AppFooter from "@/components/AppFooter.vue";
 import AppHeader from "@/components/AppHeader.vue";
 import CommandPalette from "@/components/CommandPalette.vue";
+import NavProgress from "@/components/ui/NavProgress.vue";
 import ScrollToTop from "@/components/ui/ScrollToTop.vue";
 import ToastHost from "@/components/ui/ToastHost.vue";
 
 const shared = useShared();
+const router = useRouter();
 const user = shared.user;
 const paletteRef = ref<InstanceType<typeof CommandPalette> | null>(null);
 
@@ -31,7 +33,7 @@ function focusSearch() {
     input.focus();
     return;
   }
-  window.location.href = "/search";
+  void router.visit("/search");
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -68,6 +70,7 @@ onUnmounted(() => {
 
 <template>
   <div class="min-h-screen flex flex-col bg-bg text-fg">
+    <NavProgress />
     <a class="skip-link" href="#main-content">skip to content</a>
 
     <AppHeader :user="user" @open-palette="openPalette" />

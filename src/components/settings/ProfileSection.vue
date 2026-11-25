@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { auth } from "void/client";
+import { Link } from "@void/vue";
 import SettingsSection from "./SettingsSection.vue";
 import AvatarPicker from "./AvatarPicker.vue";
 import { useSaveAction } from "@/composables/useSaveAction";
@@ -69,13 +70,13 @@ function setVisibility(next: Visibility) {
     </div>
 
     <div class="flex items-center justify-between px-4 py-3 gap-4">
-      <a
+      <Link
         v-if="props.username && visibility === 'public'"
         :href="`/u/${props.username}`"
         class="text-xs font-mono text-accent hover:underline truncate"
       >
         /u/{{ props.username }}
-      </a>
+      </Link>
       <span v-else-if="!props.username" class="text-xs font-mono text-fg-subtle">
         set a username to get a public link
       </span>

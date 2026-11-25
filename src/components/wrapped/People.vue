@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { Link } from "@void/vue";
 import type { WrappedPersonStat } from "@/domain/insights/wrapped";
 import { tmdbImage } from "@/components/tmdb-image";
 import { formatHours } from "./format";
@@ -54,7 +55,7 @@ function personMeta(subtitle: string | null, titleCount: number) {
           >
             <span class="text-[0.7rem] font-mono text-fg-subtle">{{ index + 1 }}</span>
 
-            <a
+            <Link
               :href="`/person/${person.slug}`"
               class="h-11 w-11 overflow-hidden rounded-lg bg-bg-elevated"
             >
@@ -69,15 +70,15 @@ function personMeta(subtitle: string | null, titleCount: number) {
               <div v-else class="flex h-full w-full items-center justify-center text-fg-subtle">
                 <span class="i-lucide:user h-4 w-4" aria-hidden="true" />
               </div>
-            </a>
+            </Link>
 
             <div class="min-w-0 flex flex-col gap-0.5">
-              <a
+              <Link
                 :href="`/person/${person.slug}`"
                 class="truncate text-sm font-mono text-fg transition-colors hover:text-accent"
               >
                 {{ person.name }}
-              </a>
+              </Link>
               <span class="truncate text-[0.7rem] font-mono text-fg-subtle">
                 {{ personMeta(person.subtitle, person.titleCount) }}
               </span>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { useRouter } from "@void/vue";
 
 const props = defineProps<{
   mediaId: string;
@@ -7,6 +8,7 @@ const props = defineProps<{
   loggedIn: boolean;
 }>();
 
+const router = useRouter();
 const favorited = ref(props.initial);
 const saving = ref(false);
 const error = ref("");
@@ -15,7 +17,7 @@ const pulse = ref(0);
 
 async function toggle() {
   if (!props.loggedIn) {
-    window.location.href = "/login";
+    void router.visit("/login");
     return;
   }
 

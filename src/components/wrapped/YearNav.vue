@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Link } from "@void/vue";
 import type { RecapYear } from "@/domain/recaps";
 
 const props = defineProps<{
@@ -23,7 +24,7 @@ const props = defineProps<{
         <span class="i-lucide:lock h-3 w-3" aria-hidden="true" />
         {{ item.year }}
       </span>
-      <a
+      <Link
         v-else
         :href="`/u/${props.username}/${item.year}`"
         class="border-b-2 pb-0.5 text-sm font-mono transition-colors"
@@ -35,7 +36,7 @@ const props = defineProps<{
         :aria-current="item.year === props.year ? 'page' : undefined"
       >
         {{ item.year }}
-      </a>
+      </Link>
     </template>
   </nav>
 </template>

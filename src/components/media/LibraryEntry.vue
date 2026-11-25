@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import MediaCard from "./MediaCard.vue";
+import MediaLink from "./MediaLink.vue";
 import type { MediaLayout } from "@/composables/useLayoutPreference";
 import { LIBRARY_STATUSES, statusBg, type LibraryStatus } from "@/shared/library-status";
 import type { RatingSystem } from "@/domain/rating";
@@ -56,7 +57,6 @@ const { entry, saving, displayStatus, displayScore, canLogEpisode, setStatus, lo
 const status = computed(() => displayStatus.value ?? props.status);
 const statusDot = computed(() => statusBg(status.value));
 const year = computed(() => (props.releaseDate ? new Date(props.releaseDate).getFullYear() : null));
-const href = computed(() => (props.slug ? `/media/${props.slug}` : undefined));
 const progress = computed(() => {
   if (props.mediaType !== "show") return null;
   const c = entry.value?.watchedEpisodeCount ?? 0;
@@ -125,7 +125,7 @@ async function onStatusChange(e: Event) {
     v-else
     class="flex items-center gap-3 rounded-lg pr-2 hover:bg-bg-elevated transition-colors"
   >
-    <a :href="href" class="flex min-w-0 flex-1 items-center gap-3 px-2 py-1.5 no-underline">
+    <MediaLink :slug="slug" class="flex min-w-0 flex-1 items-center gap-3 px-2 py-1.5 no-underline">
       <div class="w-8 h-12 shrink-0 overflow-hidden rounded bg-bg-elevated">
         <img
           v-if="posterPath"
@@ -143,7 +143,7 @@ async function onStatusChange(e: Event) {
           ><span v-if="progress"> · {{ progress }}</span>
         </span>
       </div>
-    </a>
+    </MediaLink>
 
     <span v-if="displayScore !== null" class="shrink-0 font-mono text-xs text-fg-muted"
       >★ {{ displayScore }}</span

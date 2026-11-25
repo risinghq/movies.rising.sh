@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Link } from "@void/vue";
 import { tmdbImage } from "@/components/tmdb-image";
 
 defineProps<{
@@ -11,7 +12,7 @@ defineProps<{
 </script>
 
 <template>
-  <a
+  <Link
     :href="`/person/${slug}`"
     class="group flex items-center gap-3 px-3 py-2 rounded-lg border border-border bg-bg-subtle hover:border-border-hover hover:bg-bg-muted transition-colors focus-ring"
   >
@@ -39,5 +40,5 @@ defineProps<{
         {{ caption }}
       </span>
     </div>
-  </a>
+  </Link>
 </template>
