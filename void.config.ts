@@ -49,7 +49,8 @@ export default defineConfig({
     // token scope the CI token lacks; the sender is passed per send instead.
     send_email: [{ name: "SEND_EMAIL" }],
     // D1 lives in ENAM; a page makes several sequential queries, so running the
-    // Worker near the database beats running it near a distant visitor.
-    placement: { mode: "smart" },
+    // Worker near the database beats running it near a distant visitor. Smart
+    // placement never moved it: it needs steady traffic from many locations.
+    placement: { mode: "targeted", region: "aws:us-east-1" },
   },
 });
