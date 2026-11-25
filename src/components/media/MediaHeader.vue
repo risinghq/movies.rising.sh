@@ -99,10 +99,12 @@ onMounted(() => {
   </header>
 
   <div class="w-full bg-bg z-40 border-b border-border" data-testid="media-subheader">
-    <div class="w-full container flex items-center justify-between gap-3">
+    <!-- wrap-reverse: on a narrow phone the actions take their own line above
+         the tabs, so the tab underline stays on the bottom border. -->
+    <div class="w-full container flex flex-wrap-reverse items-center justify-between gap-x-3">
       <nav
         aria-label="title navigation"
-        class="flex gap-3.5 sm:gap-6 -mb-px min-w-0 overflow-x-auto font-mono text-sm sm:text-[0.9375rem] media-nav"
+        class="flex shrink-0 max-w-full gap-3 sm:gap-6 -mb-px overflow-x-auto font-mono text-[0.8125rem] sm:text-[0.9375rem] media-nav"
       >
         <Link
           v-for="link in links"
@@ -116,7 +118,7 @@ onMounted(() => {
         </Link>
       </nav>
 
-      <div v-if="$slots.actions" class="flex shrink-0 items-center gap-1.5 sm:gap-2">
+      <div v-if="$slots.actions" class="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
         <slot name="actions" />
       </div>
     </div>

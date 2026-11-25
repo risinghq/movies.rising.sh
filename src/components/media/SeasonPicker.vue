@@ -46,7 +46,7 @@ function onTabKey(e: KeyboardEvent, index: number) {
       {{ optionText(s) }}
     </option>
   </select>
-  <div role="tablist" aria-label="seasons" class="seasons flex-1 min-w-0 max-sm:hidden">
+  <div role="tablist" aria-label="seasons" class="seasons flex flex-1 min-w-0 max-sm:hidden">
     <button
       v-for="(s, index) in seasons"
       :key="s.seasonNumber"
