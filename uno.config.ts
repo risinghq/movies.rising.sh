@@ -106,7 +106,9 @@ export default defineConfig({
     ["container-sm", "w-full max-w-5xl mx-auto px-4 sm:px-6"],
     ["flex-split", "flex items-center justify-between"],
     ["focus-ring", "outline-none focus-visible:(ring-2 ring-fg/50 ring-offset-2)"],
-    ["link-subtle", "text-fg-muted hover:text-fg transition-colors duration-200 focus-ring"],
+    // Not `link-*`: UnoCSS reads `-` as a variant separator, so `link-subtle`
+    // parses as the :link variant of a missing `subtle` utility and emits nothing.
+    ["quiet-link", "text-fg-muted hover:text-fg transition-colors duration-200 focus-ring"],
     [
       "title-action",
       "inline-flex h-8.5 items-center justify-center gap-1.5 rounded-md border border-border bg-transparent px-3 font-mono text-[0.8125rem] text-fg no-underline transition-colors hover:border-border-hover disabled:opacity-60 focus-ring max-sm:(size-11 px-0)",
@@ -115,6 +117,11 @@ export default defineConfig({
       "box-action",
       "flex h-11 items-center rounded-md border border-border bg-bg-subtle px-4 font-mono text-[0.8125rem] text-fg no-underline transition-colors hover:border-border-hover focus-ring sm:h-9",
     ],
+    [
+      "favorite-caption",
+      "text-[0.6875rem] leading-[0.9375rem] font-mono text-fg line-clamp-2 break-words group-hover:text-accent transition-colors",
+    ],
+    ["favorite-hint", "text-[0.6875rem] leading-relaxed font-mono text-fg-muted"],
     ["badge-orange", "bg-badge-orange/10 text-badge-orange"],
     ["badge-yellow", "bg-badge-yellow/10 text-badge-yellow"],
     ["badge-green", "bg-badge-green/10 text-badge-green"],

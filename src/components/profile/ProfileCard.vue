@@ -3,12 +3,11 @@ import type { ProfileCardModel } from "@/domain/profile-card";
 import ProfileHeader from "@/components/identity/ProfileHeader.vue";
 import ProfileSection from "@/components/identity/ProfileSection.vue";
 import ProfileStatStrip from "./ProfileStatStrip.vue";
-import FavoriteMedia from "./FavoriteMedia.vue";
-import FavoritePeople from "./FavoritePeople.vue";
+import ProfileFavorites from "./ProfileFavorites.vue";
 import ProfileActivityHeatmap from "./ProfileActivityHeatmap.vue";
 import ProfileActivityFeed from "./ProfileActivityFeed.vue";
 
-const props = defineProps<{ card: ProfileCardModel }>();
+const props = defineProps<{ card: ProfileCardModel; owner: boolean }>();
 </script>
 
 <template>
@@ -22,8 +21,7 @@ const props = defineProps<{ card: ProfileCardModel }>();
       </template>
     </ProfileHeader>
 
-    <FavoriteMedia :items="props.card.favorites.media" />
-    <FavoritePeople :people="props.card.favorites.people" />
+    <ProfileFavorites :favorites="props.card.favorites" :owner="props.owner" />
 
     <ProfileSection title="activity">
       <template #aside>

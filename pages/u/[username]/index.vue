@@ -11,7 +11,7 @@ const props = defineProps<Props>();
 <template>
   <main class="container py-8 sm:py-12">
     <div class="flex flex-col gap-10">
-      <ProfileCard :card="props.card">
+      <ProfileCard :card="props.card" :owner="props.viewer.owner">
         <template #header-aside>
           <ProfileOwnerControls v-if="props.viewer.owner" :is-private="props.isPrivate" />
           <YearNav :username="props.card.identity.username" :items="props.recapYears" />

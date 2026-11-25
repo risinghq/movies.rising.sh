@@ -23,7 +23,7 @@
       </section>
 
       <a
-        class="self-start text-sm font-mono link-subtle underline underline-offset-2"
+        class="self-start text-sm font-mono quiet-link underline underline-offset-2"
         href="https://rising.sh/privacy/#movies"
         >privacy policy</a
       >
