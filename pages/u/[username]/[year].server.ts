@@ -1,5 +1,6 @@
-import { defineHandler } from "void";
+import { defineHandler, defineHead } from "void";
 import type { InferProps } from "void";
+import { pageHead } from "@/shared/head";
 import { getUser } from "void/auth";
 import { profileRecapPage } from "@/read-models/profile-recap-page";
 
@@ -13,3 +14,12 @@ export const loader = defineHandler(async (c) => {
   });
   return page.kind === "not_found" ? c.notFound() : page;
 });
+
+export const head = defineHead<Props>((_c, { profile, year }) =>
+  pageHead({
+    title: `${profile.displayName}'s ${year} wrapped`,
+    description: `The films, shows and people behind ${profile.displayName}'s ${year}.`,
+    type: "profile",
+    noindex: profile.visibility !== "public",
+  }),
+);

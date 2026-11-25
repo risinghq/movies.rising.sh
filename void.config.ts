@@ -1,6 +1,26 @@
 import { defineConfig } from "void/config";
+import { SITE_DESCRIPTION, SITE_NAME } from "./src/shared/head";
 
 export default defineConfig({
+  // Pages build full titles with pageHead(), so there is no titleTemplate; the
+  // title here covers pages without a head export.
+  head: {
+    title: "track what you watch",
+    htmlAttrs: { lang: "en" },
+    meta: [
+      { charset: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "theme-color", content: "#171717" },
+      { name: "description", content: SITE_DESCRIPTION },
+      { property: "og:site_name", content: SITE_NAME },
+      { property: "og:type", content: "website" },
+      { property: "og:title", content: "track what you watch" },
+      { property: "og:description", content: SITE_DESCRIPTION },
+      { property: "og:image", content: "/og.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "/og.png" },
+    ],
+  },
   auth: {
     providers: ["email"],
   },

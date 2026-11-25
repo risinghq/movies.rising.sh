@@ -3,7 +3,7 @@ import { computed } from "vue";
 import BaseCard from "@/components/ui/BaseCard.vue";
 import MediaLink from "./MediaLink.vue";
 import type { MediaType } from "@/domain/catalog/media";
-import { tmdbImage } from "@/components/tmdb-image";
+import { tmdbImage } from "@/shared/tmdb-image";
 
 // Poster actions stay outside the link so nested buttons never trigger navigation.
 const props = defineProps<{

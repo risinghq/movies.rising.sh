@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { Link } from "@void/vue";
 import type { WrappedPersonStat } from "@/domain/insights/wrapped";
-import { tmdbImage } from "@/components/tmdb-image";
+import { tmdbImage } from "@/shared/tmdb-image";
 import { formatHours } from "./format";
 
 const props = defineProps<{

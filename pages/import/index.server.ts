@@ -1,5 +1,6 @@
-import { defineHandler } from "void";
+import { defineHandler, defineHead } from "void";
 import type { InferProps } from "void";
+import { pageHead } from "@/shared/head";
 import { requireAuth } from "void/auth";
 import { listUserImports } from "@/domain/import/store";
 import type { ImportReport, ImportSummary } from "@/shared/import";
@@ -21,3 +22,5 @@ export const loader = defineHandler(async (c) => {
   const selectedId = c.req.query("id") ?? null;
   return { imports, selected: imports.find((i) => i.id === selectedId) ?? null };
 });
+
+export const head = defineHead<Props>(() => pageHead({ title: "import", noindex: true }));

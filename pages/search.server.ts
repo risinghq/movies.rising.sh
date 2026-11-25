@@ -1,5 +1,6 @@
-import { defineHandler } from "void";
+import { defineHandler, defineHead } from "void";
 import type { InferProps } from "void";
+import { pageHead } from "@/shared/head";
 import { getUser } from "void/auth";
 import { getUserSettings } from "@/domain/user";
 import { searchCatalog } from "@/services/media-catalog";
@@ -22,3 +23,7 @@ export const loader = defineHandler(async (c) => {
     results,
   };
 });
+
+export const head = defineHead<Props>((_c, { query }) =>
+  pageHead({ title: query ? `search: ${query}` : "search", noindex: true }),
+);
