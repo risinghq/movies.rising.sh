@@ -6,6 +6,7 @@ import type { ImportItem, ImportScan } from "@/domain/import/items";
 import { planImport } from "@/domain/import/plan";
 import {
   createImport,
+  deleteScannedImport,
   findImport,
   findUserImport,
   importPlanWrites,
@@ -158,6 +159,15 @@ export async function undoImport(
   await runBatch(undoImportWrites(userId, importId));
   await moveImport(importId, row.state, "undone");
   return ok(undefined);
+}
+
+export async function discardImport(
+  userId: string,
+  importId: string,
+): Promise<Result<void, ImportError>> {
+  if (await deleteScannedImport(userId, importId)) return ok(undefined);
+  const row = await findUserImport(userId, importId);
+  return err({ kind: row ? "wrong_state" : "not_found" });
 }
 
 function readItems(json: string): ImportItem[] {

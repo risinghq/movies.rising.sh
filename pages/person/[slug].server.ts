@@ -7,19 +7,21 @@ import { getUser } from "void/auth";
 import { findMediaByTmdbIds } from "@/domain/catalog/media";
 import { groupByDepartment } from "@/domain/catalog/credits";
 import { isPersonFavorited } from "@/domain/tracking/favorites";
+import { watchedMediaIds } from "@/domain/tracking/watch-events";
 import { ensurePersonDetails, loadPerson } from "@/services/person-hydration";
-import type { FilmographyEntry } from "@/shared/types/metadata";
+import type { FilmographyEntry, FilmographyView } from "@/shared/types/metadata";
 
 export type Props = InferProps<typeof loader>;
 
-type FilmographyView = {
-  key: string;
-  title: string;
-  subtitle: string | null;
-  year: string | null;
-  posterPath: string | null;
-  slug: string;
-};
+// A director's page opens on directing: TMDB's known-for department leads,
+// and the rest keep their order.
+function knownForFirst<T extends { department: string }>(
+  sections: T[],
+  knownFor: string | null,
+): T[] {
+  const lead = sections.find((s) => s.department === knownFor);
+  return lead ? [lead, ...sections.filter((s) => s !== lead)] : sections;
+}
 
 // TMDB lists one credit per job or role, so a writer-producer's film shows up
 // twice in a department. Keep one card that names every job.
@@ -53,23 +55,39 @@ export const loader = defineHandler(async (c) => {
     entries.length > 0
       ? await findMediaByTmdbIds(entries.map((e) => ({ mediaType: e.mediaType, tmdbId: e.tmdbId })))
       : [];
-  const slugByKey = new Map(catalogRows.map((r) => [`${r.mediaType}:${r.tmdbId}`, r.slug]));
+  const rowByKey = new Map(catalogRows.map((r) => [`${r.mediaType}:${r.tmdbId}`, r]));
+  const watched = user
+    ? await watchedMediaIds(
+        user.id,
+        catalogRows.map((r) => r.id),
+      )
+    : new Set<string>();
 
-  const toView = (e: FilmographyEntry): FilmographyView => ({
-    key: e.creditId,
-    title: e.title,
-    subtitle: e.subtitle,
-    year: e.date ? e.date.slice(0, 4) : null,
-    posterPath: e.posterPath,
-    // A title outside the catalog links by its TMDB slug; the title page caches
-    // it on first visit.
-    slug: slugByKey.get(`${e.mediaType}:${e.tmdbId}`) ?? slugify(e.title, e.tmdbId),
-  });
+  const toView = (e: FilmographyEntry): FilmographyView => {
+    const row = rowByKey.get(`${e.mediaType}:${e.tmdbId}`);
+    return {
+      key: e.creditId,
+      title: e.title,
+      subtitle: e.subtitle,
+      year: e.date ? e.date.slice(0, 4) : null,
+      posterPath: e.posterPath,
+      // A title outside the catalog links by its TMDB slug; the title page
+      // caches it on first visit.
+      slug: row?.slug ?? slugify(e.title, e.tmdbId),
+      seen: row ? watched.has(row.id) : false,
+    };
+  };
 
-  const crewGroups = groupByDepartment(crew).map(({ department, members }) => ({
-    department,
-    items: mergeByTitle(members.map(toView)),
-  }));
+  const sections = knownForFirst(
+    [
+      { department: "Acting", items: mergeByTitle(acting.map(toView)) },
+      ...groupByDepartment(crew).map(({ department, members }) => ({
+        department,
+        items: mergeByTitle(members.map(toView)),
+      })),
+    ].filter((s) => s.items.length > 0),
+    person.knownForDepartment,
+  );
 
   return {
     person: {
@@ -83,8 +101,7 @@ export const loader = defineHandler(async (c) => {
       placeOfBirth: person.placeOfBirth,
       biography: person.biography,
     },
-    acting: mergeByTitle(acting.map(toView)),
-    crewGroups,
+    sections,
     isFavorited,
     user: user ?? null,
   };

@@ -207,7 +207,8 @@ stages:
 
 The states are `scanned`, `importing`, `done`, `failed`, and `undone`.
 `moveImport` changes state only from the expected one, so two requests cannot
-start or undo the same import.
+start or undo the same import. Discard deletes a `scanned` row, since nothing
+was written for it.
 
 The plan never overwrites the user's own data. A play already logged at the same
 instant is a duplicate. A score or status the user set stays; the import fills
@@ -222,11 +223,11 @@ play for the title. Values the import filled into an existing entry stay. A
 batches before its last attempt failed.
 
 The `/import` page (`pages/import/`) shows the state of the import named by
-`?id=`: Review for `scanned`, a polling progress view for `importing`, the
-report and Undo for `done`, and Undo for `failed`. Without `?id=` it shows the
-sources and past imports. `src/composables/useImportApi.ts` calls the routes and
-keeps a source's pending handshake in `sessionStorage` across the source's
-approval page.
+`?id=`: Review and Discard for `scanned`, a polling progress view for
+`importing`, the report and Undo for `done`, and Undo for `failed`. Without
+`?id=` it shows the sources and past imports. `src/composables/useImportApi.ts`
+calls the routes and keeps a source's pending handshake in `sessionStorage`
+across the source's approval page.
 
 The stored items are capped at 1.9 MB, under the D1 2 MB value limit; that is
 about 15,000 plays.

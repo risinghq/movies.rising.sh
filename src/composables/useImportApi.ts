@@ -113,6 +113,10 @@ export function startImport(id: string, undatedDays: string[]): Promise<ApiResul
   return post(`/api/imports/${id}/start`, { undatedDays });
 }
 
+export function discardImport(id: string): Promise<ApiResult<unknown>> {
+  return post(`/api/imports/${id}/discard`);
+}
+
 export function undoImport(id: string): Promise<ApiResult<unknown>> {
   return post(`/api/imports/${id}/undo`);
 }

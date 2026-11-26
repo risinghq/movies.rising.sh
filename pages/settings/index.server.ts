@@ -7,10 +7,10 @@ import { getUserProfile } from "@/domain/user";
 export type Props = InferProps<typeof loader>;
 
 export const loader = defineHandler(async (c) => {
-  const user = requireAuth(c);
-  const profile = await getUserProfile(user.id);
+  const profile = await getUserProfile(requireAuth(c).id);
   if (!profile) return c.notFound();
-  return { profile };
+  const { username, displayName, email, role } = profile;
+  return { account: { username, displayName, email }, isAdmin: role === "admin" };
 });
 
-export const head = defineHead<Props>(() => pageHead({ title: "settings", noindex: true }));
+export const head = defineHead<Props>(() => pageHead({ title: "account", noindex: true }));

@@ -61,6 +61,16 @@ export async function moveImport(
   return rows.length > 0;
 }
 
+// Deletes an import nothing was written for. Returns false when the row is
+// not the user's or has already started.
+export async function deleteScannedImport(userId: string, importId: string): Promise<boolean> {
+  const rows = await db
+    .delete(imports)
+    .where(and(eq(imports.id, importId), eq(imports.userId, userId), eq(imports.state, "scanned")))
+    .returning({ id: imports.id });
+  return rows.length > 0;
+}
+
 export async function saveImportReport(importId: string, report: string): Promise<void> {
   await db.update(imports).set({ report, updatedAt: Date.now() }).where(eq(imports.id, importId));
 }

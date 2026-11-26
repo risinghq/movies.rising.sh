@@ -29,7 +29,7 @@ const badge = computed(() =>
       {{ badge.label }}
     </span>
     <Link
-      href="/settings"
+      href="/settings/profile"
       class="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-mono text-fg-muted transition-colors hover:bg-bg-subtle hover:text-fg focus-ring"
     >
       <span class="i-lucide:pencil h-3 w-3" aria-hidden="true" />
