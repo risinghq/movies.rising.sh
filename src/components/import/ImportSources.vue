@@ -127,9 +127,10 @@ async function upload(source: FileSource, event: Event) {
         <template #note>
           the list must be public. AniList keeps no episode dates, so episodes arrive undated.
         </template>
-        <form class="flex flex-wrap items-center gap-2" @submit.prevent="readAnilist">
+        <form class="flex items-center gap-2" @submit.prevent="readAnilist">
           <Input
             v-model="anilistName"
+            class="min-w-0 flex-1"
             size="sm"
             placeholder="AniList username"
             aria-label="AniList username"
@@ -195,8 +196,8 @@ async function upload(source: FileSource, event: Event) {
     <p v-if="error" role="alert" class="text-xs text-red-400 font-mono">{{ error }}</p>
     <p class="text-xs text-fg-subtle">
       connected sources ask you to approve read access on their own site, and the access is revoked
-      as soon as the scan ends. AniList needs no access: its public list is read by name. export
-      files are read in your browser; only the titles, dates and ratings are sent. nothing is
+      as soon as the scan ends. AniList needs no access: your browser reads its public list by name.
+      export files are read in your browser; only the titles, dates and ratings are sent. nothing is
       written to your library until you review it.
     </p>
   </section>

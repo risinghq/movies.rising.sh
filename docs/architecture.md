@@ -257,19 +257,22 @@ Trakt app, so a new origin needs a new entry there.
 
 AniList needs no access grant
 ([`src/services/import-anilist.ts`](../src/services/import-anilist.ts)). The
-scan route takes a username and reads that user's public anime list and
-favourites through AniList's GraphQL API. A private list and an unknown name
-both answer 404, which the route reports as `unknown_user`. AniList allows 30
-requests a minute while degraded, so the scan makes at most `MAX_REQUESTS` (12),
-which read 6,000 entries; a list it cut short is reported as skipped. AniList
-ids map to TMDB through Fribb's anime-lists mapping, which the Worker keeps in
-the edge cache for a day. Each AniList entry is one season or cour: the mapping
-gives its TMDB season and episode offset. About a hundred long shows map without
-a season, because AniList numbers their episodes from 1 to the end; the scan
-reads their TMDB season sizes and splits the absolute numbers over them. AniList
-keeps no episode dates, so episode plays arrive undated and a finished movie is
-dated by its completion day. The library rates whole titles, so a show gets the
-mean of its seasons' nonzero scores.
+browser reads the user's public anime list and favourites by username through
+AniList's GraphQL API (`src/integrations/anilist/client.ts`), because AniList
+answers requests from Cloudflare Workers with 403 and answers any origin's
+browser request. A private list and an unknown name both answer 404, which the
+client reports as `unknown_user`. AniList allows 30 requests a minute while
+degraded, so the client makes at most `MAX_REQUESTS` (12), which read 6,000
+entries; a list it cut short is reported as skipped. The scan route validates
+the list and caps it at what those requests read. AniList ids map to TMDB
+through Fribb's anime-lists mapping, which the Worker keeps in the edge cache
+for a day. Each AniList entry is one season or cour: the mapping gives its TMDB
+season and episode offset. About a hundred long shows map without a season,
+because AniList numbers their episodes from 1 to the end; the scan reads their
+TMDB season sizes and splits the absolute numbers over them. AniList keeps no
+episode dates, so episode plays arrive undated and a finished movie is dated by
+its completion day. The library rates whole titles, so a show gets the mean of
+its seasons' nonzero scores.
 
 ## Queues, crons, and views
 
