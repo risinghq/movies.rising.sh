@@ -134,7 +134,7 @@ function toEntry(entry: v.InferOutput<typeof Entry>): AnilistEntry {
 }
 
 function title(t: v.InferOutput<typeof Title>): string {
-  return t.english ?? t.romaji ?? "Unknown";
+  return t.english?.trim() || t.romaji?.trim() || "Unknown";
 }
 
 function day(date: v.InferOutput<typeof FuzzyDate> | null): string | null {

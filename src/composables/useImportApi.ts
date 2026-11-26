@@ -1,6 +1,7 @@
 import type { ExportFile } from "@/domain/import/letterboxd";
 import { readImdb } from "@/domain/import/imdb";
 import { readLetterboxd } from "@/domain/import/letterboxd";
+import { fetchAnilistExport } from "@/integrations/anilist/client";
 import type { ConnectedSource, FileSource } from "@/shared/import";
 
 export type ApiResult<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -68,8 +69,18 @@ export function scanTmdb(requestToken: string): Promise<ApiResult<Staged>> {
   return post("/api/imports/tmdb/scan", { requestToken });
 }
 
-export function scanAnilist(username: string): Promise<ApiResult<Staged>> {
-  return post("/api/imports/anilist/scan", { username });
+// AniList refuses requests from Workers but allows any origin, so the browser
+// reads the public list and the server maps it onto TMDB.
+export async function scanAnilist(username: string): Promise<ApiResult<Staged>> {
+  const name = username.trim().replace(/^@/, "");
+  if (!/^[\w-]{1,20}$/.test(name)) return { ok: false, error: "unknown_user" };
+  const read = await fetchAnilistExport(name).then(
+    (data) => ({ ok: true as const, data }),
+    () => ({ ok: false as const }),
+  );
+  if (!read.ok) return { ok: false, error: "source_unavailable" };
+  if (!read.data) return { ok: false, error: "unknown_user" };
+  return post("/api/imports/anilist/scan", read.data);
 }
 
 // Reads the export in the browser and sends only the titles and entries, so
