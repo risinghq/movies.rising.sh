@@ -15,6 +15,7 @@ const emit = defineEmits<{
 }>();
 
 const searchBoxRef = ref<InstanceType<typeof HeaderSearchBox> | null>(null);
+const logoRef = ref<InstanceType<typeof LogoMark> | null>(null);
 const showMobileMenu = ref(false);
 const searchExpanded = ref(false);
 
@@ -40,7 +41,7 @@ function handleSearchBlur() {
   <header class="relative z-50 border-b border-border">
     <div class="absolute inset-0 bg-bg/80 backdrop-blur-md" />
     <nav
-      class="relative container min-h-14 z-1 flex items-center gap-1 sm:(grid grid-cols-[1fr_minmax(0,480px)_1fr] gap-4)"
+      class="relative container min-h-14 z-1 flex items-center gap-1 sm:(grid grid-cols-[auto_minmax(0,360px)_1fr] gap-6)"
       aria-label="main navigation"
     >
       <Link
@@ -48,8 +49,10 @@ function handleSearchBlur() {
         href="/"
         class="justify-self-start inline-flex items-center gap-2 me-auto shrink-0 font-mono text-lg font-medium leading-none tracking-[-0.02em] text-fg rounded focus-ring"
         aria-label="track home"
+        @pointerenter="logoRef?.play()"
+        @focus="logoRef?.play()"
       >
-        <LogoMark :size="20" />
+        <LogoMark ref="logoRef" :size="20" />
         <span>track</span>
       </Link>
 
