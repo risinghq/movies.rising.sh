@@ -24,6 +24,7 @@ returned view model.
 | `src/services/`                          | Cross-boundary orchestration                                                     |
 | `src/integrations/`                      | External provider calls and mapping                                              |
 | `src/components/` and `src/composables/` | Client UI and client-side behavior                                               |
+| `src/og/`                                | Link preview images: card element trees and the PNG renderer                     |
 | `src/styles/`                            | Theme tokens, base element styles, and fonts                                     |
 | `src/shared/`                            | Isomorphic code safe in any bundle                                               |
 | `src/types/`                             | Ambient type augmentation and module declarations                                |
@@ -279,6 +280,16 @@ average score in the viewer's own rating system (the default system for an
 anonymous viewer) and never reads the profile owner's settings, so
 `ProfileCardModel` has no rating system field and a public profile reveals
 nothing about the owner's choice.
+
+A public profile's link preview is drawn by `routes/og/u/[username].ts`.
+`src/og/profile-card.ts` builds the card as a satori element tree from the same
+`ProfileCardModel`, rendered for an anonymous viewer, and `src/og/render.ts`
+turns it into a PNG with satori and resvg. The page's `og:image` carries `?v=`,
+a hash of the drawn fields, so the edge cache keeps each image for a day without
+serving a stale card. Satori is pinned to 0.32.0: later versions read
+`self.location`, which Workers lack (vercel/satori#878). Both engines are
+imported as `.wasm` modules, because Workers cannot compile WebAssembly at
+runtime.
 
 ## Client state
 
