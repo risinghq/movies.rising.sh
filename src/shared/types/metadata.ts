@@ -115,6 +115,17 @@ export type FilmographyEntry = {
 
 export type PersonCrewEntry = FilmographyEntry & { department: string };
 
+// One card on a person page: a credit joined to the catalog and the viewer's plays.
+export type FilmographyView = {
+  key: string;
+  title: string;
+  subtitle: string | null;
+  year: string | null;
+  posterPath: string | null;
+  slug: string;
+  seen: boolean;
+};
+
 export type PersonDetail = {
   scalars: PersonScalars;
   acting: FilmographyEntry[];

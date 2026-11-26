@@ -3,10 +3,9 @@ import { computed, ref } from "vue";
 import { useRouter } from "@void/vue";
 import type { Props } from "./[slug].server";
 import { genderLabel } from "@/domain/catalog/people";
-import FilmographyCard from "@/components/media/FilmographyCard.vue";
+import FilmographySection from "@/components/person/FilmographySection.vue";
+import PersonBio from "@/components/person/PersonBio.vue";
 import { tmdbImage } from "@/shared/tmdb-image";
-
-const BIO_PREVIEW = 500;
 
 const props = defineProps<Props>();
 const router = useRouter();
@@ -14,7 +13,6 @@ const router = useRouter();
 const favorited = ref(props.isFavorited);
 const favBusy = ref(false);
 const favError = ref("");
-const bioExpanded = ref(false);
 
 const gender = computed(() => genderLabel(props.person.gender));
 
@@ -38,12 +36,21 @@ const meta = computed(() => {
   return parts;
 });
 
-const bio = computed(() => props.person.biography ?? "");
-const bioIsLong = computed(() => bio.value.length > BIO_PREVIEW);
-const bioText = computed(() =>
-  bioExpanded.value || !bioIsLong.value
-    ? bio.value
-    : `${bio.value.slice(0, BIO_PREVIEW).trimEnd()}…`,
+const seenCount = computed(
+  () =>
+    new Set(props.sections.flatMap((s) => s.items.filter((i) => i.seen).map((i) => i.slug))).size,
+);
+const filter = ref<"all" | "seen">("all");
+const FILTERS = computed(() => [
+  { id: "all" as const, label: "all" },
+  { id: "seen" as const, label: `seen · ${seenCount.value}` },
+]);
+const shownSections = computed(() =>
+  filter.value === "all"
+    ? props.sections
+    : props.sections
+        .map((s) => ({ ...s, items: s.items.filter((i) => i.seen) }))
+        .filter((s) => s.items.length > 0),
 );
 
 async function toggleFavorite() {
@@ -119,36 +126,30 @@ async function toggleFavorite() {
           {{ favorited ? "unfavorite" : "favorite" }}
         </button>
 
-        <div v-if="bio" class="text-sm font-mono text-fg-muted leading-relaxed max-w-prose">
-          <p class="whitespace-pre-line">{{ bioText }}</p>
-          <button
-            v-if="bioIsLong"
-            type="button"
-            class="mt-1 text-fg-subtle hover:text-accent transition-colors"
-            @click="bioExpanded = !bioExpanded"
-          >
-            {{ bioExpanded ? "show less" : "show more" }}
-          </button>
-        </div>
+        <PersonBio v-if="person.biography" :text="person.biography" />
 
         <p v-if="favError" class="text-sm text-red-400 font-mono">{{ favError }}</p>
       </div>
     </section>
 
-    <section v-if="acting.length" class="flex flex-col gap-4">
-      <h2 class="text-sm font-mono text-fg-muted">acting · {{ acting.length }}</h2>
-      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-x-4 gap-y-5">
-        <FilmographyCard v-for="f in acting" :key="f.key" v-bind="f" />
-      </div>
-    </section>
+    <div v-if="seenCount" class="flex items-center gap-1 -mb-4" role="group" aria-label="show">
+      <button
+        v-for="option in FILTERS"
+        :key="option.id"
+        type="button"
+        class="px-3 py-1.5 rounded-md text-xs font-mono transition-colors focus-ring"
+        :class="filter === option.id ? 'bg-bg-muted text-fg' : 'text-fg-muted hover:text-fg'"
+        :aria-pressed="filter === option.id"
+        @click="filter = option.id"
+      >
+        {{ option.label }}
+      </button>
+    </div>
 
-    <section v-for="group in crewGroups" :key="group.department" class="flex flex-col gap-4">
-      <h2 class="text-sm font-mono text-fg-muted">
-        {{ group.department.toLowerCase() }} · {{ group.items.length }}
-      </h2>
-      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-x-4 gap-y-5">
-        <FilmographyCard v-for="f in group.items" :key="f.key" v-bind="f" />
-      </div>
-    </section>
+    <FilmographySection
+      v-for="section in shownSections"
+      :key="`${filter}-${section.department}`"
+      v-bind="section"
+    />
   </main>
 </template>

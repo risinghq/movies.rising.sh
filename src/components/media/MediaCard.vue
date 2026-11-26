@@ -56,7 +56,7 @@ const year = computed(() => (props.releaseDate ? new Date(props.releaseDate).get
     <div class="flex flex-col gap-1.5 p-3">
       <MediaLink
         :slug="slug"
-        class="font-mono text-sm text-fg leading-snug line-clamp-2 min-h-[2.5em] hover:text-accent transition-colors"
+        class="font-mono text-sm text-fg leading-snug line-clamp-2 hover:text-accent transition-colors"
       >
         {{ title }}
       </MediaLink>

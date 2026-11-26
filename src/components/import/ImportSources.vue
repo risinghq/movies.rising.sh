@@ -194,11 +194,6 @@ async function upload(source: FileSource, event: Event) {
       matching each title to TMDB. a few thousand titles take under a minute.
     </p>
     <p v-if="error" role="alert" class="text-xs text-red-400 font-mono">{{ error }}</p>
-    <p class="text-xs text-fg-subtle">
-      connected sources ask you to approve read access on their own site, and the access is revoked
-      as soon as the scan ends. AniList needs no access: your browser reads its public list by name.
-      export files are read in your browser; only the titles, dates and ratings are sent. nothing is
-      written to your library until you review it.
-    </p>
+    <p class="text-xs text-fg-subtle">nothing is written to your library until you review it.</p>
   </section>
 </template>

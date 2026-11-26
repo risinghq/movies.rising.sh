@@ -46,6 +46,20 @@ export async function hasWatch(userId: string, mediaId: string): Promise<boolean
   return rows.length > 0;
 }
 
+// The titles among mediaIds the user has logged any watch for.
+export async function watchedMediaIds(
+  userId: string,
+  mediaIds: readonly string[],
+): Promise<Set<string>> {
+  const rows = await selectByIds(mediaIds, (batch) =>
+    db
+      .selectDistinct({ mediaId: watchEvents.mediaId })
+      .from(watchEvents)
+      .where(and(eq(watchEvents.userId, userId), inArray(watchEvents.mediaId, batch))),
+  );
+  return new Set(rows.map((r) => r.mediaId));
+}
+
 export type WatchedEpisodes = { watched: EpisodeRef[]; provisionalCount: number };
 
 export async function watchedAndProvisional(

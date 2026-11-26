@@ -14,7 +14,7 @@ import { Link } from "@void/vue";
       class="mt-4 inline-flex items-center gap-2 rounded-xl border border-border bg-bg-subtle px-4 py-3 text-sm hover:border-border-hover transition-colors"
     >
       <span class="i-lucide:download w-4 h-4 text-fg-muted" aria-hidden="true" />
-      <span class="text-fg-muted">coming from Trakt or TMDB?</span>
+      <span class="text-fg-muted">coming from another tracker?</span>
       <span class="font-mono text-fg">bring your history</span>
     </Link>
   </section>

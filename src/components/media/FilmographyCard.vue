@@ -8,12 +8,21 @@ defineProps<{
   year?: string | null;
   posterPath?: string | null;
   slug: string;
+  seen?: boolean;
 }>();
 </script>
 
 <template>
   <Link :href="`/media/${slug}`" class="group flex flex-col gap-2 focus-ring rounded-lg">
-    <div class="poster-wrap rounded-lg overflow-hidden bg-bg-elevated">
+    <div class="poster-wrap relative rounded-lg overflow-hidden bg-bg-elevated">
+      <span
+        v-if="seen"
+        class="absolute top-1.5 left-1.5 z-10 inline-flex items-center justify-center size-5 rounded-full bg-bg/80 backdrop-blur-sm border border-border/50 text-accent"
+        title="seen"
+      >
+        <span class="i-lucide:check w-3 h-3" aria-hidden="true" />
+        <span class="sr-only">seen</span>
+      </span>
       <img
         v-if="posterPath"
         :src="tmdbImage(posterPath, 'w342')"

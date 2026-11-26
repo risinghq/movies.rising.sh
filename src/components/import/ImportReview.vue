@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { Link, useRouter } from "@void/vue";
+import { useRouter } from "@void/vue";
 import Btn from "@/components/ui/Btn.vue";
 import SettingsSection from "@/components/settings/SettingsSection.vue";
-import { importMessage, startImport } from "@/composables/useImportApi";
+import { discardImport, importMessage, startImport } from "@/composables/useImportApi";
 import type { ImportSummary } from "@/shared/import";
 import { formatCount, formatDay, skippedLabel } from "./format";
 
@@ -50,19 +50,33 @@ const ratingsSkipped = computed(
   () => "episode_rating" in props.summary.skipped || "season_rating" in props.summary.skipped,
 );
 
-const starting = ref(false);
+const pending = ref<"start" | "discard" | null>(null);
 const error = ref("");
+const startLabel = computed(() => (pending.value === "start" ? "starting..." : "import"));
+const discardLabel = computed(() => (pending.value === "discard" ? "discarding..." : "discard"));
 
 async function start() {
-  starting.value = true;
+  pending.value = "start";
   error.value = "";
   const result = await startImport(props.id, [...undated.value]);
   if (!result.ok) {
-    starting.value = false;
+    pending.value = null;
     error.value = importMessage(result.error);
     return;
   }
   void router.visit(`/import?id=${props.id}`, { replace: true });
+}
+
+async function discard() {
+  pending.value = "discard";
+  error.value = "";
+  const result = await discardImport(props.id);
+  if (!result.ok && result.error !== "not_found") {
+    pending.value = null;
+    error.value = importMessage(result.error);
+    return;
+  }
+  void router.visit("/import", { replace: true });
 }
 </script>
 
@@ -116,10 +130,22 @@ async function start() {
     </section>
 
     <div class="flex flex-wrap items-center gap-3">
-      <Btn variant="primary" classicon="i-lucide:download" :disabled="starting" @click="start">
-        {{ starting ? "starting..." : "import" }}
+      <Btn
+        variant="primary"
+        classicon="i-lucide:download"
+        :disabled="pending !== null"
+        @click="start"
+      >
+        {{ startLabel }}
       </Btn>
-      <Link href="/import" class="text-sm font-mono text-fg-muted hover:text-fg">not now</Link>
+      <button
+        type="button"
+        class="text-sm font-mono text-fg-muted hover:text-fg disabled:opacity-50"
+        :disabled="pending !== null"
+        @click="discard"
+      >
+        {{ discardLabel }}
+      </button>
       <span v-if="undatedPlays" class="text-xs text-fg-subtle">
         {{ formatCount(undatedPlays, "play", "plays") }} without a date
       </span>
