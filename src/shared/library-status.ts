@@ -26,4 +26,15 @@ export function resolveStatus(filed: LibraryStatus, progress: StatusProgress): L
   return filed;
 }
 
-export const statusBg = (status: LibraryStatus): string => `bg-status-${status}`;
+// UnoCSS scans this .ts file only because of the marker below, and only
+// literal class names: a template string like `bg-status-${s}` generates no CSS.
+// @unocss-include
+const STATUS_BG: Record<LibraryStatus, string> = {
+  planned: "bg-status-planned",
+  watching: "bg-status-watching",
+  completed: "bg-status-completed",
+  paused: "bg-status-paused",
+  dropped: "bg-status-dropped",
+};
+
+export const statusBg = (status: LibraryStatus): string => STATUS_BG[status];
