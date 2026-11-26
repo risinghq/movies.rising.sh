@@ -31,17 +31,19 @@ export type ImportError =
   | { kind: "too_large" };
 
 // A source read through the user's approval (TMDB, Trakt) can also be down or
-// refuse the approval.
+// refuse the approval. A source read by username (AniList) can lack the user.
 export type ConnectedImportError =
   | ImportError
   | { kind: "source_unavailable" }
-  | { kind: "not_approved" };
+  | { kind: "not_approved" }
+  | { kind: "unknown_user" };
 
 export function connectedImportErrorStatus(
   error: ConnectedImportError,
 ): 400 | 404 | 409 | 413 | 502 {
   if (error.kind === "source_unavailable") return 502;
   if (error.kind === "not_approved") return 400;
+  if (error.kind === "unknown_user") return 404;
   return importErrorStatus(error);
 }
 

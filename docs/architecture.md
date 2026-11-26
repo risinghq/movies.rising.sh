@@ -189,10 +189,10 @@ bound. `db.batch()` is one atomic transaction.
 An import moves another tracker's data into one user's library. It runs in four
 stages:
 
-1. A reader under `src/domain/import/` (`trakt.ts`, `tmdb.ts`) turns a source's
-   export into `ImportItem`s: plays, ratings, planned titles, favorites, and
-   dropped titles. It reports what it cannot map, such as episode ratings, as
-   skipped.
+1. A reader under `src/domain/import/` (`trakt.ts`, `tmdb.ts`, `anilist.ts`)
+   turns a source's export into `ImportItem`s: plays, ratings, planned titles,
+   favorites, and dropped titles. It reports what it cannot map, such as episode
+   ratings, as skipped.
 2. `stageImport` in [`src/services/import.ts`](../src/services/import.ts) stores
    the items and a summary in an `imports` row in state `scanned`. The summary
    lists batch days: days with so many plays that they were bulk marks, not
@@ -254,6 +254,22 @@ and dropped shows, revokes the token, and stages the result. No user token is
 stored. The scan reads at most `MAX_PAGES` (200) pages of 250 rows; a list it
 cut short is reported as skipped. The redirect URI must be registered on the
 Trakt app, so a new origin needs a new entry there.
+
+AniList needs no access grant
+([`src/services/import-anilist.ts`](../src/services/import-anilist.ts)). The
+scan route takes a username and reads that user's public anime list and
+favourites through AniList's GraphQL API. A private list and an unknown name
+both answer 404, which the route reports as `unknown_user`. AniList allows 30
+requests a minute while degraded, so the scan makes at most `MAX_REQUESTS` (12),
+which read 6,000 entries; a list it cut short is reported as skipped. AniList
+ids map to TMDB through Fribb's anime-lists mapping, which the Worker keeps in
+the edge cache for a day. Each AniList entry is one season or cour: the mapping
+gives its TMDB season and episode offset. About a hundred long shows map without
+a season, because AniList numbers their episodes from 1 to the end; the scan
+reads their TMDB season sizes and splits the absolute numbers over them. AniList
+keeps no episode dates, so episode plays arrive undated and a finished movie is
+dated by its completion day. The library rates whole titles, so a show gets the
+mean of its seasons' nonzero scores.
 
 ## Queues, crons, and views
 

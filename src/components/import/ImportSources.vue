@@ -2,8 +2,9 @@
 import { ref } from "vue";
 import { useRouter } from "@void/vue";
 import Btn from "@/components/ui/Btn.vue";
+import Input from "@/components/ui/Input.vue";
 import ImportSourceCard from "@/components/import/ImportSourceCard.vue";
-import { connectSource, importMessage, scanExport } from "@/composables/useImportApi";
+import { connectSource, importMessage, scanAnilist, scanExport } from "@/composables/useImportApi";
 import type { ConnectedSource, FileSource } from "@/shared/import";
 
 const CONNECTED: { id: ConnectedSource; name: string; brings: string; note?: string }[] = [
@@ -53,8 +54,21 @@ const FILES: {
 ];
 
 const router = useRouter();
-const busy = ref<ConnectedSource | FileSource | null>(null);
+const busy = ref<ConnectedSource | FileSource | "anilist" | null>(null);
 const error = ref("");
+const anilistName = ref("");
+
+async function readAnilist() {
+  busy.value = "anilist";
+  error.value = "";
+  const result = await scanAnilist(anilistName.value);
+  if (!result.ok) {
+    busy.value = null;
+    error.value = importMessage(result.error);
+    return;
+  }
+  void router.visit(`/import?id=${result.value.id}`);
+}
 
 async function connect(source: ConnectedSource) {
   busy.value = source;
@@ -107,6 +121,35 @@ async function upload(source: FileSource, event: Event) {
         </Btn>
       </ImportSourceCard>
       <ImportSourceCard
+        name="AniList"
+        brings="anime you watched, are watching, plan to watch or dropped, scores and favorites"
+      >
+        <template #note>
+          the list must be public. AniList keeps no episode dates, so episodes arrive undated.
+        </template>
+        <form class="flex flex-wrap items-center gap-2" @submit.prevent="readAnilist">
+          <Input
+            v-model="anilistName"
+            size="sm"
+            placeholder="AniList username"
+            aria-label="AniList username"
+            autocomplete="off"
+            spellcheck="false"
+            required
+            :disabled="busy !== null"
+          />
+          <Btn
+            type="submit"
+            variant="primary"
+            size="sm"
+            classicon="i-lucide:list-video"
+            :disabled="busy !== null"
+          >
+            {{ busy === "anilist" ? "reading list..." : "read list" }}
+          </Btn>
+        </form>
+      </ImportSourceCard>
+      <ImportSourceCard
         v-for="source in FILES"
         :key="source.id"
         :name="source.name"
@@ -152,8 +195,9 @@ async function upload(source: FileSource, event: Event) {
     <p v-if="error" role="alert" class="text-xs text-red-400 font-mono">{{ error }}</p>
     <p class="text-xs text-fg-subtle">
       connected sources ask you to approve read access on their own site, and the access is revoked
-      as soon as the scan ends. export files are read in your browser; only the titles, dates and
-      ratings are sent. nothing is written to your library until you review it.
+      as soon as the scan ends. AniList needs no access: its public list is read by name. export
+      files are read in your browser; only the titles, dates and ratings are sent. nothing is
+      written to your library until you review it.
     </p>
   </section>
 </template>

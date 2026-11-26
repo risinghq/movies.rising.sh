@@ -68,6 +68,10 @@ export function scanTmdb(requestToken: string): Promise<ApiResult<Staged>> {
   return post("/api/imports/tmdb/scan", { requestToken });
 }
 
+export function scanAnilist(username: string): Promise<ApiResult<Staged>> {
+  return post("/api/imports/anilist/scan", { username });
+}
+
 // Reads the export in the browser and sends only the titles and entries, so
 // the rest of the export (a Letterboxd profile's email, reviews) stays here.
 export async function scanExport(source: FileSource, files: File[]): Promise<ApiResult<Staged>> {
@@ -112,6 +116,7 @@ export async function importState(id: string): Promise<string | null> {
 const MESSAGES: Record<string, string> = {
   source_unavailable: "the source is not answering. try again in a minute.",
   not_approved: "access was not granted. connect again and approve it.",
+  unknown_user: "no public AniList profile has that name. check it, or make your list public.",
   empty: "this account has nothing to import.",
   too_large: "this history is larger than one import holds (about 15,000 plays).",
   wrong_state: "this import has already moved on. reload the page.",

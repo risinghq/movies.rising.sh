@@ -1,6 +1,7 @@
-export const IMPORT_SOURCES = ["trakt", "tmdb", "letterboxd", "imdb"] as const;
+export const IMPORT_SOURCES = ["trakt", "tmdb", "anilist", "letterboxd", "imdb"] as const;
 export type ImportSource = (typeof IMPORT_SOURCES)[number];
-// Sources the user approves on their own site; the rest arrive as files.
+// Sources the user approves on their own site; AniList is read by username;
+// the rest arrive as files.
 export type ConnectedSource = "trakt" | "tmdb";
 export type FileSource = "letterboxd" | "imdb";
 

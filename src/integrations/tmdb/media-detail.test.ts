@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { parseMovieDetail, parseShowDetail } from "./media-detail";
-import { parseSeasonEpisodes } from "./season";
+import { parseSeasonEpisodes, parseShowSeasonSizes } from "./season";
 
 describe("TMDB detail parsing", () => {
   it("maps movie details and drops invalid credit rows", () => {
@@ -223,6 +223,21 @@ describe("TMDB detail parsing", () => {
     expect(parseSeasonEpisodes(raw, 1)).toEqual([
       { seasonNumber: 1, episodeNumber: 1, name: "Pilot", runtime: 42, airDate: "2020-01-01" },
       { seasonNumber: 1, episodeNumber: 3, name: null, runtime: null, airDate: null },
+    ]);
+  });
+
+  it("orders a show's regular seasons with their episode counts", () => {
+    const raw = {
+      seasons: [
+        { season_number: 2, episode_count: 24 },
+        { season_number: 0, episode_count: 5 },
+        { season_number: 1, episode_count: 61 },
+      ],
+    };
+
+    expect(parseShowSeasonSizes(raw)).toEqual([
+      { seasonNumber: 1, episodeCount: 61 },
+      { seasonNumber: 2, episodeCount: 24 },
     ]);
   });
 });

@@ -10,7 +10,7 @@ export { discoverCompanyTitles } from "./discover";
 export { fetchMovieDetail, fetchShowDetail } from "./media-detail";
 export { fetchPersonDetail } from "./person";
 export { findTmdbByImdbId, searchTmdbTitle } from "./find";
-export { fetchSeasonEpisodes } from "./season";
+export { fetchSeasonEpisodes, fetchShowSeasonSizes } from "./season";
 export {
   TMDB_APPROVE_URL,
   createTmdbAccessToken,
