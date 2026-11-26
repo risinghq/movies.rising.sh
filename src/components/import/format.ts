@@ -34,6 +34,7 @@ export function skippedLabel(reason: string, n: number): string {
 const SOURCE_NAMES: Record<string, string> = {
   trakt: "Trakt",
   tmdb: "TMDB",
+  anilist: "AniList",
   letterboxd: "Letterboxd",
   imdb: "IMDb",
 };

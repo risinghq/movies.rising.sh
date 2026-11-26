@@ -1,4 +1,5 @@
 import { env } from "void/env";
+import { fetchWithRetry } from "../http";
 
 const TRAKT_API = "https://api.trakt.tv";
 // Trakt serves every OAuth step (authorize, token, revoke) from this host.
@@ -20,6 +21,7 @@ function requireClientId(): string {
 
 export type TraktPage = { rows: unknown[]; pageCount: number };
 
+// Trakt allows a user 500 GETs per 5 minutes; a scan stays far below that.
 export async function traktGet(path: string, accessToken: string): Promise<TraktPage> {
   const response = await fetchWithRetry(`${TRAKT_API}${path}`, {
     headers: {
@@ -51,17 +53,4 @@ export async function traktAuthPost(
   });
   if (response.status >= 500) throw new Error(`Trakt ${path} → ${response.status}`);
   return { status: response.status, body: await response.json().catch(() => null) };
-}
-
-// Trakt allows a user 500 GETs per 5 minutes. A scan stays far below that, so
-// a 429 is retried once when Trakt asks for a short wait, and fails otherwise.
-const MAX_RETRY_WAIT_SECONDS = 10;
-
-async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
-  const response = await fetch(url, init);
-  if (response.status !== 429) return response;
-  const wait = Number(response.headers.get("Retry-After"));
-  if (!Number.isFinite(wait) || wait > MAX_RETRY_WAIT_SECONDS) return response;
-  await new Promise((resolve) => setTimeout(resolve, Math.max(wait, 1) * 1000));
-  return fetch(url, init);
 }
